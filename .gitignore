@@ -1,6 +1,6 @@
 .env
 data
-results
+
 vector-stores
 charts
 tests

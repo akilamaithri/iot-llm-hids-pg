@@ -1,0 +1,85 @@
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+{'attack': {'precision': 0.9672131147540983, 'recall': 0.9516129032258065, 'f1-score': 0.959349593495935, 'support': 62.0}, 'normal': {'precision': 0.9516129032258065, 'recall': 0.9672131147540983, 'f1-score': 0.959349593495935, 'support': 61.0}, 'accuracy': 0.959349593495935, 'macro avg': {'precision': 0.9594130089899524, 'recall': 0.9594130089899524, 'f1-score': 0.959349593495935, 'support': 123.0}, 'weighted avg': {'precision': 0.9594764244839699, 'recall': 0.959349593495935, 'f1-score': 0.959349593495935, 'support': 123.0}}
+
+Confusion Matrix
+[[59  3]
+ [ 2 59]]
+
+Classication Report
+              precision    recall  f1-score   support
+
+      attack     0.9920    0.9920    0.9920       249
+      normal     0.9918    0.9918    0.9918       243
+
+    accuracy                         0.9919       492
+   macro avg     0.9919    0.9919    0.9919       492
+weighted avg     0.9919    0.9919    0.9919       492
+
+
+Confusion Matrix
+[[247   2]
+ [  2 241]]
+

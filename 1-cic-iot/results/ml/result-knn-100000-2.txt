@@ -1,0 +1,70 @@
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+
+Classication Report
+{'attack': {'precision': 1.0, 'recall': 0.967741935483871, 'f1-score': 0.9836065573770492, 'support': 62.0}, 'normal': {'precision': 0.9682539682539683, 'recall': 1.0, 'f1-score': 0.9838709677419355, 'support': 61.0}, 'accuracy': 0.983739837398374, 'macro avg': {'precision': 0.9841269841269842, 'recall': 0.9838709677419355, 'f1-score': 0.9837387625594923, 'support': 123.0}, 'weighted avg': {'precision': 0.9842560330365209, 'recall': 0.983739837398374, 'f1-score': 0.9837376877206108, 'support': 123.0}}
+
+Confusion Matrix
+[[60  2]
+ [ 0 61]]
+

@@ -1,0 +1,26 @@
+Classification Report
+                    precision    recall  f1-score   support
+
+     BenignTraffic     0.2865    0.3426    0.3120       470
+        DDoS-Flood     0.5163    0.4383    0.4741       470
+DDoS-Fragmentation     0.7482    0.9400    0.8332       433
+      DNS_Spoofing     0.1065    0.2222    0.1440        81
+         DoS-Flood     0.6370    0.1979    0.3019       470
+  MITM-ArpSpoofing     0.3540    0.3053    0.3279       131
+             Mirai     0.8068    0.9064    0.8537       470
+             Recon     0.3024    0.4397    0.3584       141
+
+          accuracy                         0.5300      2666
+         macro avg     0.4697    0.4740    0.4506      2666
+      weighted avg     0.5542    0.5300    0.5171      2666
+
+
+Confusion Matrix
+[[161   4 104 105   0  32   1  63]
+ [177 206   0   0  52   0  26   9]
+ [ 10   0 407   1   0   4   1  10]
+ [ 26   0   7  18   0  14   1  15]
+ [116 173   0   0  93   4  72  12]
+ [ 38   2  18  15   0  40   1  17]
+ [ 10   0   0   1   0  16 426  17]
+ [ 24  14   8  29   1   3   0  62]]
