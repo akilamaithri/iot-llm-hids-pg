@@ -1,0 +1,9 @@
+```json
+{
+  "conn_state": "If conn_state is 'OTH', classify as attack; otherwise normal",
+  "dst_port": "If dst_port is 4444, classify as attack; otherwise normal",
+  "duration": "If duration is 0.0, classify as attack; otherwise normal",
+  "src_pkts": "If src_pkts is 1, classify as attack; otherwise normal",
+  "service": "If service is '-' (dash/empty), classify as attack; if service is 'http', classify as attack; otherwise normal"
+}
+```

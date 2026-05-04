@@ -1,0 +1,10 @@
+ae577a06-89c9-4d62-8f3c-a66c434277cb
+```json
+{
+  "dst_port": "If dst_port == 4444, classify as attack; otherwise normal",
+  "conn_state": "If conn_state is 'OTH', classify as attack; if conn_state is 'S0', 'SH', or 'RSTOS0', classify as normal",
+  "duration": "If duration == 0.0, classify as attack; if duration > 0, classify as normal",
+  "dst_bytes": "If dst_bytes == 0 and src_bytes == 0, classify as attack; if dst_bytes > 0 or src_bytes > 0, classify as normal",
+  "weird_name": "If weird_name contains 'data_before_established', classify as normal; if weird_name == '-', classify as attack"
+}
+```
