@@ -15,7 +15,7 @@ size unless otherwise noted.
   $^\dagger$Sample counts reflect balanced subsampled training corpora.
   $^\S$Only 370 normal flows exist in the Bot-IoT population; corpus is limited to 370 per class (740 total).
   $^\P$UNSW-NB15 multi-class corpus: 9 classes $\times$ 1{,}511 samples each (13{,}599 total);
-  Worms class excluded (174 samples — insufficient for reliable per-class F1).
+  Worms class excluded (174 samples, insufficient for reliable per-class F1).
   A separate binary corpus of 10{,}000 samples is used for the anonymization ablation.}
 \label{tab:datasets}
 \begin{tabular}{llccl}
@@ -35,10 +35,7 @@ UNSW-NB15     & UNSW-NB15 Network Dataset$^\P$                & 9  & 13{,}599  &
 \subsection{Multi-Class Classification Results}\label{subsec:multiclass_results}
 %=======================================================================
 
-Table~\ref{tab:multiclass_summary} compares macro-averaged F1 for the
-LLM-based classifier against Random Forest and Decision Tree baselines
-on CIC-IoT2023 and UNSW-NB15. Per-class precision, recall, and F1
-breakdowns are provided in Appendix~\ref{app:detailed}.
+Table~\ref{tab:multiclass_summary} compares macro-averaged F1 for the LLM-based classifier against Random Forest and Decision Tree baselines on CIC-IoT2023 and UNSW-NB15. Per-class precision, recall, and F1 breakdowns are provided in Appendix~\ref{app:detailed}.
 
 \begin{table}[htbp]
 \centering
@@ -53,8 +50,8 @@ breakdowns are provided in Appendix~\ref{app:detailed}.
 \toprule
 \textbf{Dataset} &
   \textbf{LLM} &
-  \textbf{Random Forest} &
-  \textbf{Decision Tree} &
+  \textbf{RF} &
+  \textbf{DT} &
   \textbf{LLM/RF Gap} \\
 \midrule
 CIC-IoT2023  & 0.4506 & 0.8874 & 0.8811 & 2$\times$ \\
@@ -63,39 +60,11 @@ UNSW-NB15    & 0.0722 & 0.6324 & 0.5963 & 9$\times$ \\
 \end{tabular}
 \end{table}
 
-The UNSW-NB15 results expose a dataset-level limitation not present in CIC-IoT2023.
-The LLM achieves a macro F1 of only $0.07$ versus Random Forest's $0.63$, a 9$\times$
-gap compared to the 2$\times$ gap observed on CIC-IoT2023 ($0.45$ vs.\ $0.89$).
-Crucially, the gap is not solely an LLM weakness: even Random Forest struggles on
-Analysis~(0.32), Backdoor~(0.24), and DoS~(0.27), indicating that these classes
-share overlapping traffic signatures at the feature level.
-The root cause is convergence: multiple attack classes independently learn near-identical
-volume-based rules (\texttt{sload}~$>$~$5\times10^7$, \texttt{rate}~$>$~$10^5$),
-causing the proportion-of-rules-fired scorer to tie across classes and default to the
-Normal label for the majority of test rows.
-This manifests in the high precision but near-zero recall for Generic~(1.00/0.02) and
-Reconnaissance~(1.00/0.007): the rules are correct when they fire, but fire so rarely
-that $>$90\% of true instances are missed.
-The result is interpretable as a diagnostic finding: UNSW-NB15's sub-class attack
-families are statistically nearly indistinguishable in the feature space sampled,
-and the zero-shot rule-generation approach cannot resolve this ambiguity without
-gradient-based training on the discriminative directions between classes.
+The UNSW-NB15 results expose a dataset-level limitation not present in CIC-IoT2023. The LLM achieves a macro F1 of only $0.07$ versus Random Forest's $0.63$, a 9$\times$ gap compared to the 2$\times$ gap observed on CIC-IoT2023 ($0.45$ vs.\ $0.89$). We observe the gap is not solely an LLM weakness: even Random Forest struggles on Analysis~(0.32), Backdoor~(0.24), and DoS~(0.27), indicating overlapping traffic signatures at the feature level. The root cause is convergence: multiple attack classes independently learn near-identical volume based rules causing the proportion-of-rules fired scorer to tie across classes and default to the Normal label for the majority of test rows. This is apparent in the high precision but near-zero recall for Generic~(1.00/0.02) and Reconnaissance~(1.00/0.007). Hence, the rules are correct when they fire, but fire so rarely that $>$90\% of true instances are missed.
+The results reveal that UNSW-NB15's sub-class attack
+families are statistically nearly indistinguishable in the feature space sampled, and the zero-shot rule-generation approach cannot resolve this ambiguity without gradient-based training on the discriminative directions between classes.
 
-
-Binary classification baselines across the remaining three datasets
-are included in Table~\ref{tab:anon_ablation}, which reports both
-original and anonymized F1 for all five datasets. These serve as the basis
-for the anonymization and zero-day analyses in subsequent sections.
-WUSTL-IIoT, TON\_IoT, and Bot-IoT are evaluated in binary mode rather than
-multi-class mode for the following reasons: WUSTL-IIoT has only four classes,
-making the multi-class and binary settings nearly equivalent in scope;
-Bot-IoT's corpus is severely size-limited at 740 training samples, which
-is insufficient for stable per-class rule generation across five attack families;
-and TON\_IoT's ten attack families exhibit substantial traffic-signature overlap
-at the flow level, making it a stronger subject for the zero-day and
-anonymization experiments than for multi-class classification.
-The multi-class setting is therefore focused on CIC-IoT2023 and UNSW-NB15,
-which respectively represent the best-case (high inter-class separability)
+Binary classification baselines across the remaining three datasets are included in Table~\ref{tab:anon_ablation}, which reports both original and anonymized F1 for all five datasets. These serve as the basis for the anonymization and zero-day analyses in subsequent sections. WUSTL-IIoT, TON\_IoT, and Bot-IoT are evaluated in binary mode rather than multi-class mode for the following reasons: WUSTL-IIoT has only four classes, making the multi-class and binary settings nearly equivalent in scope; Bot-IoT's corpus is severely size-limited (to preserve class balance) at 740 training samples, which is insufficient for stable per-class rule generation across five attack families; and TON\_IoT's ten attack families exhibit substantial traffic-signature overlap at the flow level, making it a stronger subject for the zero-day and anonymization experiments than for multi-class classification. The multi-class setting is therefore focused on CIC-IoT2023 and UNSW-NB15, which respectively represent the best-case (high inter-class separability)
 and worst-case (high intra-class overlap) outcomes for the method.
 
 \subsection{Zero-Day Detection Analysis}
@@ -103,9 +72,7 @@ and worst-case (high intra-class overlap) outcomes for the method.
 %=======================================================================
 
 Table~\ref{tab:zeroday_summary} reports zero-day detection performance for
-each dataset. The ZDR column denotes the fraction of withheld-class flows
-correctly flagged as anomalous; Known-F1 is the macro-averaged F1 on the
-remaining known classes. A ZDR near 1.0 indicates that the LLM-generated rules
+each dataset. The ZDR (Zero-Day Detection Rate) column denotes the fraction of withheld-class flows correctly flagged as anomalous; Known-F1 is the macro-averaged F1 on the remaining known classes. A ZDR near 1.0 indicates that the LLM-generated rules
 are discriminative enough to isolate the withheld attack family, while
 Known-F1 measures the cost to closed-set performance of removing one class.
 
@@ -114,7 +81,7 @@ Known-F1 measures the cost to closed-set performance of removing one class.
 \caption{Zero-day detection performance. The withheld class is excluded entirely
   from training and the retrieval corpus. ZDR~=~Zero-Day Detection Rate;
   Known-F1~=~macro F1 on remaining classes. All results at seed~42.
-  $^\dagger$Two experimental runs available; the higher-ZDR run is reported;
+  $^\dagger$Two experimental runs available; the selected run is reported;
   see Table~\ref{tab:zeroday_wustl_both} in the appendix for the comparison.}
 \label{tab:zeroday_summary}
 \begin{tabular}{llccc}
@@ -144,16 +111,11 @@ UNSW-NB15 (Reconnaissance) yields a ZDR of $0.482$, the lowest of the
 non-CIC scenarios, and is the only case where traditional ML classifiers
 decisively outperform the LLM on zero-day detection
 (DT: $0.845$, RF: $0.879$ versus LLM: $0.482$).
-This reversal is consistent with the multiclass analysis: UNSW-NB15
-Reconnaissance traffic shares volume-level statistical signatures with the
-known attack classes in the training set, so the threshold rules learned from
-known attacks fire on Reconnaissance flows at roughly chance rate.
-The anonymization ablation for this experiment confirms feature names are
+This reversal is consistent with the multiclass analysis. UNSW-NB15 Reconnaissance traffic shares volume-level statistical signatures with the known attack classes in the training set, so the threshold rules learned from known attacks fire on Reconnaissance flows at roughly chance rate. The anonymization ablation for this experiment confirms feature names are
 irrelevant: $\Delta$ZDR~$= +0.005 \pm 0.009$ across three seeds, indicating
 that the low ZDR is structural rather than name-driven.
 
 For WUSTL-IIoT, two runs with different rule configurations were available;
-% TODO: tab:zeroday_wustl_both and app:detailed must be defined before submission
 Table~\ref{tab:zeroday_wustl_both} in Appendix~\ref{app:detailed} presents
 both results (ZDR of 1.0 and 0.999 respectively).
 
@@ -161,11 +123,7 @@ both results (ZDR of 1.0 and 0.999 respectively).
 \label{subsec:anon_results}
 %=======================================================================
 
-Table~\ref{tab:anon_ablation} compares macro-averaged F1 under original
-(semantic) versus anonymized (opaque-identifier) feature names across all
-datasets with ablation results available. The Jaccard index quantifies
-how consistently the system selects the same top-5 features across seeds when
-feature names are hidden.
+Table~\ref{tab:anon_ablation} compares macro-averaged F1 under original (semantic) versus anonymized (opaque-identifier) feature names across all datasets with ablation results available. The Jaccard index quantifies how consistently the system selects the same top-5 features across seeds when feature names are hidden.
 
 \begin{table*}[htbp]
 \centering
@@ -191,9 +149,142 @@ UNSW-NB15   & \textbf{0.7779} & 0.0058 & 0.7683 & 0.0010 & $-$0.0096 & 0.508 $\p
 \end{tabular}
 \end{table*}
 
-Across all five datasets, anonymization does not degrade detection
-performance; in three of five cases it actively improves it.
-CIC-IoT2023 ($\Delta\text{F1} = +0.071$) and TON\_IoT ($\Delta\text{F1} = +0.175$) both show a substantial positive shift under anonymization. For TON\_IoT, the absolute F1 gain of $+0.175$ is accompanied by an increase in seed-to-seed variance (std rises from $0.002$ to $0.052$ under anonymization), suggesting the LLM explores a wider range of rule configurations when feature names are opaque. WUSTL-IIoT converges to near-identical F1 under both conditions ($\Delta\text{F1} < 0.001$, Jaccard $= 0.369$), indicating that the two conditions discover different but equally discriminative feature subsets. Bot-IoT and UNSW-NB15 show near-neutral effects ($|\Delta\text{F1}| \leq 0.01$), consistent with datasets whose discriminative structure is axis-aligned and recoverable regardless of whether feature names carry semantic meaning. Across all five datasets, no case emerges in which semantic naming provides a statistically robust advantage. The results suggest that the LLM policy generator relies primarily on numerical patterns in the representative samples rather than on feature-name semantics, a finding that has positive implications for deployment in environments where feature names may be obfuscated or non-descriptive.
+Anonymization has not degraded detection performance across all five datasets. In three of five cases it actively improves it. CIC-IoT2023 ($\Delta\text{F1} = +0.071$) and TON\_IoT ($\Delta\text{F1} = +0.175$) both show a substantial positive shift under anonymization. For TON\_IoT, the absolute F1 gain of $+0.175$ is accompanied by an increase in seed-to-seed variance (std rises from $0.002$ to $0.052$ under anonymization), suggesting the LLM explores a wider range of rule configurations when feature names are opaque. WUSTL-IIoT converges to near-identical F1 under both conditions ($\Delta\text{F1} < 0.001$, Jaccard $= 0.369$), indicating that the two conditions discover different but equally discriminative feature subsets. Bot-IoT and UNSW-NB15 show near-neutral effects ($|\Delta\text{F1}| \leq 0.01$), consistent with datasets whose discriminative structure is axis-aligned and recoverable regardless of whether feature names carry semantic meaning. Across all five datasets, no case emerges in which semantic naming provides a statistically reliable advantage. The results suggest that the LLM policy generator relies primarily on numerical patterns in the representative samples rather than on feature-name semantics, a finding that has positive implications for deployment in environments where feature names may be obfuscated or non-descriptive.
+
+\subsection{Policy Refinement, Cost, and Feature Use}
+\label{subsec:policy_refinement_cost_features}
+%=======================================================================
+
+Table~\ref{tab:policy_refinement} reports the held-out test macro-averaged F1 of
+the combined majority-vote policy across rounds. The refinement loop optimizes a
+mean single-rule training-set F1 signal that the LLM observes, but the table
+evaluates the final selected rules on the held-out test split to measure actual
+generalization. The feedback loop does not improve monotonically. TON\_IoT and
+UNSW-NB15 improve from Round 1 to the best observed round. Bot-IoT and
+WUSTL-IIoT converge early and maintain their best score through Round 5.
+CIC-IoT2023 shows steady improvement across all rounds.
+
+\begin{table}[htbp]
+\centering
+\caption{Held-out test macro-averaged F1 of the combined majority-vote policy
+  across refinement rounds. Evaluation is on the final selected rules from each
+  round, applied to the test split.}
+\label{tab:policy_refinement}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset} & \textbf{Round 1} & \textbf{Best} & \textbf{Round 5} & \textbf{Change} \\
+\midrule
+CIC-IoT2023  & 0.8007 & 0.9426 (R4) & 0.9426 & $+$0.1419 \\
+WUSTL-IIoT   & 0.9252 & 0.9252 (R1) & 0.9252 & $+$0.0000 \\
+TON\_IoT     & 0.4251 & 0.7701 (R4) & 0.7004 & $+$0.2750 \\
+Bot-IoT      & 0.7006 & 0.9232 (R2) & 0.7006 & $+$0.0000 \\
+UNSW-NB15    & 0.7504 & 0.7507 (R3) & 0.7507 & $+$0.0003 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:token_usage} reports token usage only where the current
+notebooks record prompt, completion, and total tokens. CIC-IoT2023, WUSTL-IIoT, and
+Bot-IoT have partial or incomplete token traces in the saved output.
+Therefore, the older claim about using a fixed percentage of the GPT-4o context
+window is not restated here. The current files also do not provide a documented
+pricing basis for the models used in these runs, so no dollar cost is reported.
+
+\begin{table}[htbp]
+\centering
+\caption{Available token usage from current binary LLM notebooks.}
+\label{tab:token_usage}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Dataset} & \textbf{Prompt Tokens} & \textbf{Completion Tokens} & \textbf{Total Tokens} \\
+\midrule
+TON\_IoT  & 8{,}137 & 682 & 8{,}819 \\
+Bot-IoT   & 4{,}385 & 431 & 4{,}816 \\
+UNSW-NB15 & 5{,}801 & 265 & 6{,}066 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The submitted version also reported faster policy inference than Decision
+Tree and Random Forest baselines. The current result files do not contain a
+matched timing benchmark for the same rows, preprocessing, hardware, and rule
+sets used in this section. The speed claim is therefore not repeated. To
+support it, the experiment should time DT, RF, and rule evaluation on the
+same test rows, repeat each condition at least 30 times, and report median
+milliseconds per row with an interquartile range.
+
+Table~\ref{tab:attack_precision_current} reports attack-class precision,
+recall, and F1 from the current saved binary reports. These files do not all
+record the model identity, so the table is evidence from available saved
+reports rather than a controlled model comparison. The results do not support
+a blanket high-precision claim across all datasets. CIC-IoT2023 has very high
+attack precision and TON\_IoT and Bot-IoT remain high in the saved reports.
+WUSTL-IIoT does not follow this pattern. Its attack recall is 1.0, but its
+attack precision is only 0.3222 because many normal flows are flagged as
+attacks. UNSW-NB15 is also moderate rather than high. The correct
+interpretation is that the policy rules can be precise in some settings, but
+precision is dataset-dependent and must be reported with recall.
+
+\begin{table}[htbp]
+\centering
+\caption{Attack-class performance from current saved binary reports.}
+\label{tab:attack_precision_current}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Support} \\
+\midrule
+CIC-IoT2023 & 0.9982 & 0.9625 & 0.9800 & 19{,}530 \\
+WUSTL-IIoT  & 0.3222 & 1.0000 & 0.4873 & 17{,}403 \\
+TON\_IoT    & 0.9200 & 0.9300 & 0.9300 & 29{,}687 \\
+Bot-IoT     & 0.8700 & 0.9900 & 0.9300 & 1{,}000 \\
+UNSW-NB15   & 0.7800 & 0.8500 & 0.8200 & 1{,}000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:feature_use_current} compares exported ML feature-importance
+outputs with available LLM rule features. The current repository exports both
+ML and LLM feature evidence for CIC-IoT2023. For the other datasets, the LLM
+rule features are available, but the matched ML top-feature lists are not
+exported as result files. Bot-IoT and UNSW-NB15 are listed from GPT-4o rule
+files and should not be compared directly with the Claude runs above. These
+rows should therefore be treated as incomplete until the permutation-importance
+cells are rerun and saved under the same model condition. For CIC-IoT2023, the
+overlap is limited. The LLM rules include \texttt{flow\_duration}, which also
+appears among the Random Forest features, but the remaining LLM rule features
+differ from the exported ML lists.
+
+\begin{table*}[htbp]
+\centering
+\caption{Current feature-use evidence from exported result files.}
+\label{tab:feature_use_current}
+\begin{tabular}{llcl}
+\toprule
+\textbf{Dataset} & \textbf{Available ML Features} & \textbf{Overlap} & \textbf{Available LLM Rule Features} \\
+\midrule
+CIC-IoT2023 &
+rst\_count, urg\_count, Variance, flow\_duration, Tot size &
+1 &
+flow\_duration, IAT, Number, Magnitue, rst\_flag\_number \\
+WUSTL-IIoT &
+not exported in current result files &
+N/A &
+DstPkts, pLoss, DstBytes, Dur, dTtl \\
+TON\_IoT &
+not exported in current result files &
+N/A &
+dst\_port, conn\_state, duration, dst\_bytes, weird\_name \\
+Bot-IoT (GPT-4o file) &
+not exported in current result files &
+N/A &
+saddr, dport, stddev, N\_IN\_Conn\_P\_SrcIP, srate \\
+UNSW-NB15 (GPT-4o file) &
+not exported in current result files &
+N/A &
+proto, state, dpkts, dbytes, dttl \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 \subsection{Threshold Sensitivity Analysis}
 \label{subsec:threshold}
