@@ -1,0 +1,21 @@
+dataset: UNSW-NB15
+sample_size: 100000
+seed: 42
+model_name: claude-haiku-4-5-20251001
+rule_file: results/generated-rules-100000-llm-claude-haiku-4-5-20251001.txt
+date: 2026-05-05
+---
+Classification Report
+              precision    recall  f1-score   support
+
+           0     0.7124    0.8487    0.7746     10000
+           1     0.8129    0.6573    0.7269     10000
+
+    accuracy                         0.7530     20000
+   macro avg     0.7626    0.7530    0.7507     20000
+weighted avg     0.7626    0.7530    0.7507     20000
+
+
+Confusion Matrix
+[[8487 1513]
+ [3427 6573]]

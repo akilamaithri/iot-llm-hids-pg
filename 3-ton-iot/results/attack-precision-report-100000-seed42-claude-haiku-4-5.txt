@@ -1,0 +1,21 @@
+dataset: TON_IoT
+sample_size: 100000
+seed: 42
+model_name: claude-haiku-4-5-20251001
+rule_file: results/generated-rules-100000-llm-claude-haiku-4-5-20251001.txt
+date: 2026-05-05
+---
+Classification Report
+              precision    recall  f1-score   support
+
+           0     0.4598    0.8881    0.6059      8408
+           1     0.7497    0.2431    0.3671     11592
+
+    accuracy                         0.5142     20000
+   macro avg     0.6047    0.5656    0.4865     20000
+weighted avg     0.6278    0.5142    0.4675     20000
+
+
+Confusion Matrix
+[[7467  941]
+ [8774 2818]]
