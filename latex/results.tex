@@ -214,70 +214,91 @@ same test rows, repeat each condition at least 30 times, and report median
 milliseconds per row with an interquartile range.
 
 Table~\ref{tab:attack_precision_current} reports attack-class precision,
-recall, and F1 from the current saved binary reports. These files do not all
-record the model identity, so the table is evidence from available saved
-reports rather than a controlled model comparison. The results do not support
-a blanket high-precision claim across all datasets. CIC-IoT2023 has very high
-attack precision and TON\_IoT and Bot-IoT remain high in the saved reports.
-WUSTL-IIoT does not follow this pattern. Its attack recall is 1.0, but its
-attack precision is only 0.3222 because many normal flows are flagged as
-attacks. UNSW-NB15 is also moderate rather than high. The correct
-interpretation is that the policy rules can be precise in some settings, but
-precision is dataset-dependent and must be reported with recall.
+recall, and F1 from the standardised binary evaluation
+(claude-haiku-4-5-20251001, seed~42). CIC-IoT2023, WUSTL-IIoT, and Bot-IoT
+all achieve high precision and recall ($\geq 0.96$), confirming that the
+generated rule sets separate attack from normal traffic effectively when
+class signatures are well-separated. TON\_IoT is the outlier: precision is
+moderate ($0.75$) but recall collapses to $0.24$, meaning roughly
+three-quarters of true attack flows are missed. This is consistent with the
+multi-class analysis in Section~\ref{subsec:multiclass_results}, which
+identifies TON\_IoT as a dataset with heavy intra-class overlap across its
+ten attack families. UNSW-NB15 achieves intermediate performance
+($0.81$/$0.66$). The results confirm that precision and recall must be
+reported together: binary separability is high for four of five datasets but
+collapses for TON\_IoT due to feature-space overlap.
 
 \begin{table}[htbp]
 \centering
-\caption{Attack-class performance from current saved binary reports.}
+\caption{Attack-class performance from the standardised binary evaluation
+  (claude-haiku-4-5-20251001, seed~42, best-round rule set).
+  Support is the number of attack-class test rows.}
 \label{tab:attack_precision_current}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Dataset} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Support} \\
 \midrule
-CIC-IoT2023 & 0.9982 & 0.9625 & 0.9800 & 19{,}530 \\
-WUSTL-IIoT  & 0.3222 & 1.0000 & 0.4873 & 17{,}403 \\
-TON\_IoT    & 0.9200 & 0.9300 & 0.9300 & 29{,}687 \\
-Bot-IoT     & 0.8700 & 0.9900 & 0.9300 & 1{,}000 \\
-UNSW-NB15   & 0.7800 & 0.8500 & 0.8200 & 1{,}000 \\
+CIC-IoT2023 & 0.9994 & 0.9743 & 0.9867 & 19{,}530 \\
+WUSTL-IIoT  & 0.9792 & 0.9632 & 0.9711 & 10{,}000 \\
+TON\_IoT    & 0.7497 & 0.2431 & 0.3671 & 11{,}592 \\
+Bot-IoT     & 0.9922 & 0.9780 & 0.9850 & 10{,}000 \\
+UNSW-NB15   & 0.8129 & 0.6573 & 0.7269 & 10{,}000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:feature_use_current} compares exported Random Forest
-feature-importance outputs with the LLM rule features used by the same
-standardised Claude binary evaluation. These LLM features are saved in
-\texttt{llm-rule-features-100000-claude-haiku-4-5-20251001.json}. The overlap
-is limited across datasets. CIC-IoT2023 and WUSTL-IIoT each share one feature
-with the Random Forest top-five list, Bot-IoT shares two, and TON\_IoT and
-UNSW-NB15 share none.
+Table~\ref{tab:feature_use_current} compares permutation-importance top-5
+features for Random Forest and Decision Tree baselines against the LLM rule
+features from
+\texttt{llm-rule-features-100000-claude-haiku-4-5-20251001.json}.
+RF--LLM overlap is 1 for CIC-IoT2023, WUSTL-IIoT, and TON\_IoT, 2 for
+Bot-IoT, and 0 for UNSW-NB15. DT--LLM overlap mirrors or exceeds RF--LLM
+overlap in most cases (TON\_IoT: DT\,=\,2 vs.\ RF\,=\,1; Bot-IoT:
+both\,=\,2), with CIC-IoT2023 the exception (RF\,=\,1, DT\,=\,0). Across all
+five datasets the LLM rules select features with limited intersection with the
+top permutation-importance directions of either tree-based baseline.
 
 \begin{table*}[htbp]
 \centering
-\caption{Current feature-use evidence from exported result files.}
+\caption{Feature-use comparison using permutation-importance top-5 for RF and
+  DT versus LLM rule features (all from the standardised evaluation at seed~42).
+  RF$\cap$LLM (DT$\cap$LLM) counts features shared between the RF (DT)
+  permutation top-5 and the LLM rule set.}
 \label{tab:feature_use_current}
-\begin{tabular}{llcl}
+\begin{tabular}{lp{3.0cm}p{3.0cm}p{3.0cm}cc}
 \toprule
-\textbf{Dataset} & \textbf{Available ML Features} & \textbf{Overlap} & \textbf{Available LLM Rule Features} \\
+\textbf{Dataset} &
+  \textbf{Top RF Features} &
+  \textbf{Top DT Features} &
+  \textbf{Top LLM Features} &
+  \textbf{RF$\cap$LLM} &
+  \textbf{DT$\cap$LLM} \\
 \midrule
 CIC-IoT2023 &
-rst\_count, urg\_count, Variance, flow\_duration, Tot size &
-1 &
-flow\_duration, Header\_Length, Duration, Srate, ack\_flag\_number \\
+  rst\_count, Variance, Number, flow\_duration, urg\_count &
+  rst\_count, Protocol Type, syn\_count, DNS, ICMP &
+  flow\_duration, Header\_Length, Duration, Srate, ack\_flag\_number &
+  1 & 0 \\
 WUSTL-IIoT &
-DIntPkt, DstJitter, DstBytes, DstPkts, DAppBytes &
-1 &
-SrcAddr, TotPkts, DstRate, DstPkts, DstLoad \\
+  DstAddr, SrcAddr, sTtl, IdleTime, DIntPkt &
+  DIntPkt, SrcAddr, Sport, sTtl, DstAddr &
+  SrcAddr, TotPkts, DstRate, DstPkts, DstLoad &
+  1 & 1 \\
 TON\_IoT &
-src\_ip, proto, src\_ip\_bytes, src\_pkts, dst\_ip &
-0 &
-dst\_port, conn\_state, duration, weird\_name \\
+  src\_ip, proto, dst\_ip, src\_pkts, dst\_port &
+  src\_ip, conn\_state, dst\_port, src\_pkts, src\_port &
+  dst\_port, conn\_state, duration, weird\_name &
+  1 & 2 \\
 Bot-IoT &
-N\_IN\_Conn\_P\_DstIP, pkSeqID, dport, seq, N\_IN\_Conn\_P\_SrcIP &
-2 &
-saddr, dport, stddev, N\_IN\_Conn\_P\_SrcIP, state\_number \\
+  N\_IN\_Conn\_P\_DstIP, pkSeqID, seq, N\_IN\_Conn\_P\_SrcIP, dport &
+  N\_IN\_Conn\_P\_DstIP, pkSeqID, dport, seq, N\_IN\_Conn\_P\_SrcIP &
+  saddr, dport, stddev, N\_IN\_Conn\_P\_SrcIP, state\_number &
+  2 & 2 \\
 UNSW-NB15 &
-sttl, ct\_state\_ttl, sload, dload, rate &
-0 &
-proto, dur, state, dpkts, dttl \\
+  ct\_dst\_src\_ltm, sbytes, dmean, synack, service &
+  sttl, ct\_state\_ttl, sbytes, dmean, smean &
+  proto, dur, state, dpkts, dttl &
+  0 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table*}
