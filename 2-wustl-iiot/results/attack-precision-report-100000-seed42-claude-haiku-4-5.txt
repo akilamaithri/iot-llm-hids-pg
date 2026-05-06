@@ -2,7 +2,7 @@ dataset: WUSTL-IIoT
 sample_size: 100000
 seed: 42
 model_name: claude-haiku-4-5-20251001
-rule_file: results/generated-rules-100000-llm-claude-haiku-4-5-20251001.txt
+rule_file: ../results/llm-rule-features-100000-claude-haiku-4-5-20251001.json
 date: 2026-05-05
 ---
 Classification Report

@@ -242,17 +242,13 @@ UNSW-NB15   & 0.7800 & 0.8500 & 0.8200 & 1{,}000 \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:feature_use_current} compares exported ML feature-importance
-outputs with available LLM rule features. The current repository exports both
-ML and LLM feature evidence for CIC-IoT2023. For the other datasets, the LLM
-rule features are available, but the matched ML top-feature lists are not
-exported as result files. Bot-IoT and UNSW-NB15 are listed from GPT-4o rule
-files and should not be compared directly with the Claude runs above. These
-rows should therefore be treated as incomplete until the permutation-importance
-cells are rerun and saved under the same model condition. For CIC-IoT2023, the
-overlap is limited. The LLM rules include \texttt{flow\_duration}, which also
-appears among the Random Forest features, but the remaining LLM rule features
-differ from the exported ML lists.
+Table~\ref{tab:feature_use_current} compares exported Random Forest
+feature-importance outputs with the LLM rule features used by the same
+standardised Claude binary evaluation. These LLM features are saved in
+\texttt{llm-rule-features-100000-claude-haiku-4-5-20251001.json}. The overlap
+is limited across datasets. CIC-IoT2023 and WUSTL-IIoT each share one feature
+with the Random Forest top-five list, Bot-IoT shares two, and TON\_IoT and
+UNSW-NB15 share none.
 
 \begin{table*}[htbp]
 \centering
@@ -265,23 +261,23 @@ differ from the exported ML lists.
 CIC-IoT2023 &
 rst\_count, urg\_count, Variance, flow\_duration, Tot size &
 1 &
-flow\_duration, IAT, Number, Magnitue, rst\_flag\_number \\
+flow\_duration, Header\_Length, Duration, Srate, ack\_flag\_number \\
 WUSTL-IIoT &
-not exported in current result files &
-N/A &
-DstPkts, pLoss, DstBytes, Dur, dTtl \\
+DIntPkt, DstJitter, DstBytes, DstPkts, DAppBytes &
+1 &
+SrcAddr, TotPkts, DstRate, DstPkts, DstLoad \\
 TON\_IoT &
-not exported in current result files &
-N/A &
-dst\_port, conn\_state, duration, dst\_bytes, weird\_name \\
-Bot-IoT (GPT-4o file) &
-not exported in current result files &
-N/A &
-saddr, dport, stddev, N\_IN\_Conn\_P\_SrcIP, srate \\
-UNSW-NB15 (GPT-4o file) &
-not exported in current result files &
-N/A &
-proto, state, dpkts, dbytes, dttl \\
+src\_ip, proto, src\_ip\_bytes, src\_pkts, dst\_ip &
+0 &
+dst\_port, conn\_state, duration, weird\_name \\
+Bot-IoT &
+N\_IN\_Conn\_P\_DstIP, pkSeqID, dport, seq, N\_IN\_Conn\_P\_SrcIP &
+2 &
+saddr, dport, stddev, N\_IN\_Conn\_P\_SrcIP, state\_number \\
+UNSW-NB15 &
+sttl, ct\_state\_ttl, sload, dload, rate &
+0 &
+proto, dur, state, dpkts, dttl \\
 \bottomrule
 \end{tabular}
 \end{table*}

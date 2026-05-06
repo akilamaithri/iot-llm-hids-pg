@@ -7,4 +7,5 @@ tests
 .conda
 chroma_*
 *.json
+!results/llm-rule-features-*.json
 *.csv

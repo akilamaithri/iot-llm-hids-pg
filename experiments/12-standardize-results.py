@@ -4,6 +4,7 @@ This script:
 1. Generates standardized binary classification reports for all 5 datasets with model/seed headers
 2. Regenerates ML feature-importance (permutation, DT, RF) for WUSTL, TON, Bot, UNSW
    (CIC already has these files)
+3. Aggregates all standardized outputs into results/policy_refinement_cost_feature_summary.{csv,json}
 
 Inlines logic from 11-matched-inference-benchmark.py to avoid module import issues.
 """
@@ -11,6 +12,7 @@ Inlines logic from 11-matched-inference-benchmark.py to avoid module import issu
 from __future__ import annotations
 
 import argparse
+import json
 import operator
 from dataclasses import dataclass
 from datetime import datetime
@@ -38,6 +40,16 @@ OPS: dict[str, Callable[[Any, Any], Any]] = {
     ">=": operator.ge,
     "==": operator.eq,
     "!=": operator.ne,
+}
+
+MODEL_NAME = "claude-haiku-4-5-20251001"
+SEED = 42
+BEST_ROUNDS = {
+    "cic": 4,
+    "wustl": 1,
+    "ton": 4,
+    "bot": 2,
+    "unsw": 3,
 }
 
 
@@ -476,9 +488,9 @@ def save_attack_precision_report(
 
     header = f"""dataset: {config.display_name}
 sample_size: {config.sample_size}
-seed: 42
-model_name: claude-haiku-4-5-20251001
-rule_file: results/generated-rules-{config.sample_size}-llm-claude-haiku-4-5-20251001.txt
+seed: {SEED}
+model_name: {MODEL_NAME}
+rule_file: ../results/llm-rule-features-{config.sample_size}-{MODEL_NAME}.json
 date: {datetime.now().strftime('%Y-%m-%d')}
 ---
 """
@@ -488,6 +500,46 @@ date: {datetime.now().strftime('%Y-%m-%d')}
         f.write(report)
         f.write("\n\nConfusion Matrix\n")
         f.write(str(cm))
+
+
+def rule_to_record(rule: Rule) -> dict[str, Any]:
+    return {
+        "feature_name": rule.feature,
+        "op": rule.op,
+        "value": rule.value,
+        "rule": f"{rule.feature} {rule.op} {rule.value}",
+    }
+
+
+def export_llm_rule_features(configs: list[DatasetConfig]) -> Path:
+    """Persist the exact LLM rule features used by standardized binary reports."""
+    sample_sizes = {config.sample_size for config in configs}
+    if len(sample_sizes) != 1:
+        raise ValueError(f"Expected one sample size, got {sorted(sample_sizes)}")
+    sample_size = sample_sizes.pop()
+    out_path = REPO_ROOT / "results" / f"llm-rule-features-{sample_size}-{MODEL_NAME}.json"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    rows = []
+    for config in configs:
+        rows.append(
+            {
+                "dataset": config.display_name,
+                "seed": SEED,
+                "round": BEST_ROUNDS[config.key],
+                "rule_id": (
+                    f"standardize-results:{config.key}:seed{SEED}:"
+                    f"round{BEST_ROUNDS[config.key]}:{MODEL_NAME}"
+                ),
+                "feature_names": [rule.feature for rule in config.rules],
+                "rules": [rule_to_record(rule) for rule in config.rules],
+            }
+        )
+
+    with open(out_path, "w") as f:
+        json.dump(rows, f, indent=2)
+        f.write("\n")
+    return out_path
 
 
 def compute_gini_importance(
@@ -555,6 +607,172 @@ def compute_permutation_importance(
     importances_df["Mean"] = importances_df[normalized_columns].mean(axis=1)
     importances_sorted_df = importances_df.sort_values(by="Mean", ascending=False)
     return importances_sorted_df
+
+
+def parse_attack_precision_report(path: Path, attack_label: str = "attack") -> dict[str, Any]:
+    """Parse metadata header and attack/macro-avg rows from a standardized report file.
+
+    attack_label must match the first token of the attack class row in the report.
+    CIC uses the string "attack"; other datasets use "1" (numeric label).
+    """
+    lines = path.read_text().splitlines()
+    meta: dict[str, str] = {}
+    body_start = 0
+    for i, line in enumerate(lines):
+        if line.strip() == "---":
+            body_start = i + 1
+            break
+        if ": " in line:
+            key, val = line.split(": ", 1)
+            meta[key.strip()] = val.strip()
+
+    attack_prec = attack_recall = attack_f1 = test_macro_f1 = None
+    for line in lines[body_start:]:
+        stripped = line.strip()
+        parts = stripped.split()
+        if not parts:
+            continue
+        if parts[0] == attack_label and len(parts) >= 4:
+            attack_prec, attack_recall, attack_f1 = (
+                float(parts[1]),
+                float(parts[2]),
+                float(parts[3]),
+            )
+        elif stripped.startswith("macro avg") and len(parts) >= 5:
+            test_macro_f1 = float(parts[4])
+
+    return {
+        "dataset": meta.get("dataset"),
+        "sample_size": int(meta.get("sample_size", 0)),
+        "seed": int(meta.get("seed", 0)),
+        "model_name": meta.get("model_name"),
+        "final_rule_file": meta.get("rule_file"),
+        "test_macro_f1": test_macro_f1,
+        "attack_precision": attack_prec,
+        "attack_recall": attack_recall,
+        "attack_f1": attack_f1,
+    }
+
+
+def parse_policy_refinement_summary(path: Path, best_round: int) -> dict[str, Any]:
+    """Extract train F1 and cumulative token counts from a policy-refinement-summary JSON.
+
+    Returns None for each field when the file is absent or all token counts are zero
+    (which indicates the data was not recorded, not that zero tokens were used).
+    """
+    if not path.exists():
+        return {
+            "train_macro_f1": None,
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "total_tokens": None,
+        }
+    data = json.loads(path.read_text())
+    rounds = data.get("rounds", [])
+    round_idx = best_round - 1
+    train_macro_f1 = rounds[round_idx].get("macro_f1") if round_idx < len(rounds) else None
+    prompt = sum(r.get("round_prompt_tokens", 0) for r in rounds)
+    completion = sum(r.get("round_completion_tokens", 0) for r in rounds)
+    total = sum(r.get("round_total_tokens", 0) for r in rounds)
+    if prompt == 0 and completion == 0 and total == 0:
+        prompt = completion = total = None
+    return {
+        "train_macro_f1": train_macro_f1,
+        "prompt_tokens": prompt,
+        "completion_tokens": completion,
+        "total_tokens": total,
+    }
+
+
+def parse_permutation_top5(path: Path, col: str) -> list[str]:
+    """Return top-5 feature names from a permutation-importance CSV sorted by col descending."""
+    if not path.exists():
+        return []
+    df = pd.read_csv(path, index_col=0)
+    if col not in df.columns:
+        return []
+    return df[col].sort_values(ascending=False).head(5).index.tolist()
+
+
+def generate_summary_artifact(configs: list[DatasetConfig]) -> None:
+    """Aggregate all standardized outputs into a single per-dataset summary CSV + JSON.
+
+    Reads from whatever result files currently exist on disk; missing files produce
+    None values rather than raising errors. Output goes to
+    results/policy_refinement_cost_feature_summary.{csv,json}.
+    """
+    sample_sizes = {c.sample_size for c in configs}
+    sample_size = next(iter(sample_sizes)) if len(sample_sizes) == 1 else 100000
+    llm_features_path = REPO_ROOT / "results" / f"llm-rule-features-{sample_size}-{MODEL_NAME}.json"
+    llm_features_map: dict[str, list[str]] = {}
+    if llm_features_path.exists():
+        for entry in json.loads(llm_features_path.read_text()):
+            llm_features_map[entry["dataset"]] = entry["feature_names"]
+
+    rows: list[dict[str, Any]] = []
+    for config in configs:
+        results_dir = REPO_ROOT / config.dataset_dir / "results"
+        report_path = (
+            results_dir
+            / f"attack-precision-report-{config.sample_size}-seed42-claude-haiku-4-5.txt"
+        )
+        if not report_path.exists():
+            print(f"  WARN: no attack report for {config.display_name} — row omitted")
+            continue
+
+        report = parse_attack_precision_report(report_path, attack_label=str(config.attack_value))
+        refinement = parse_policy_refinement_summary(
+            results_dir
+            / "llm"
+            / f"policy-refinement-summary-{config.sample_size}-{MODEL_NAME}.json",
+            BEST_ROUNDS[config.key],
+        )
+        top_llm = llm_features_map.get(config.display_name, [])
+        perm_path = results_dir / f"feature-importance-{config.sample_size}-permutation.csv"
+        top_rf = parse_permutation_top5(perm_path, "RF_minmax_normalized")
+        top_dt = parse_permutation_top5(perm_path, "DT_minmax_normalized")
+        llm_set = set(top_llm)
+
+        rows.append(
+            {
+                "dataset": report["dataset"],
+                "sample_size": report["sample_size"],
+                "seed": report["seed"],
+                "model_name": report["model_name"],
+                "round": BEST_ROUNDS[config.key],
+                "train_macro_f1": refinement["train_macro_f1"],
+                "test_macro_f1": report["test_macro_f1"],
+                "attack_precision": report["attack_precision"],
+                "attack_recall": report["attack_recall"],
+                "attack_f1": report["attack_f1"],
+                "prompt_tokens": refinement["prompt_tokens"],
+                "completion_tokens": refinement["completion_tokens"],
+                "total_tokens": refinement["total_tokens"],
+                "final_rule_file": report["final_rule_file"],
+                "top_llm_features": "; ".join(top_llm),
+                "top_rf_features": "; ".join(top_rf),
+                "top_dt_features": "; ".join(top_dt),
+                "rf_overlap": len(llm_set & set(top_rf)),
+                "dt_overlap": len(llm_set & set(top_dt)),
+            }
+        )
+
+    if not rows:
+        print("No result files found; summary artifact not written.")
+        return
+
+    out_dir = REPO_ROOT / "results"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    csv_path = out_dir / "policy_refinement_cost_feature_summary.csv"
+    pd.DataFrame(rows).to_csv(csv_path, index=False)
+    print(f"Saved summary CSV  → {csv_path.relative_to(REPO_ROOT)}")
+
+    json_path = out_dir / "policy_refinement_cost_feature_summary.json"
+    with open(json_path, "w") as f:
+        json.dump(rows, f, indent=2)
+        f.write("\n")
+    print(f"Saved summary JSON → {json_path.relative_to(REPO_ROOT)}")
 
 
 def process_dataset(config: DatasetConfig) -> None:
@@ -631,12 +849,23 @@ def main() -> None:
         action="store_true",
         help="Skip datasets whose CSV files are not present locally.",
     )
+    parser.add_argument(
+        "--export-rule-features-only",
+        action="store_true",
+        help="Only write the matched LLM rule-feature JSON used by standardized reports.",
+    )
     args = parser.parse_args()
 
     keys = list(DATASETS) if args.dataset == "all" else [args.dataset]
+    configs = [DATASETS[key] for key in keys]
 
-    for key in keys:
-        config = DATASETS[key]
+    if args.export_rule_features_only:
+        out_path = export_llm_rule_features(configs)
+        print(f"Saved LLM rule features to {out_path.relative_to(REPO_ROOT)}")
+        return
+
+    processed_configs: list[DatasetConfig] = []
+    for config in configs:
         if args.skip_missing:
             try:
                 raw_a, raw_b, _ = load_raw_frames(config)
@@ -644,6 +873,16 @@ def main() -> None:
                 print(f"\nSkipping {config.display_name}: data files not found")
                 continue
         process_dataset(config)
+        processed_configs.append(config)
+
+    if processed_configs:
+        out_path = export_llm_rule_features(processed_configs)
+        print(f"Saved LLM rule features to {out_path.relative_to(REPO_ROOT)}")
+
+    print(f"\n{'='*70}")
+    print("Generating consolidated summary artifact...")
+    print(f"{'='*70}")
+    generate_summary_artifact(list(DATASETS.values()))
 
     print(f"\n{'='*70}")
     print("Done!")

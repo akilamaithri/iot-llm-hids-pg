@@ -2,8 +2,8 @@ dataset: TON_IoT
 sample_size: 100000
 seed: 42
 model_name: claude-haiku-4-5-20251001
-rule_file: results/generated-rules-100000-llm-claude-haiku-4-5-20251001.txt
-date: 2026-05-05
+rule_file: ../results/llm-rule-features-100000-claude-haiku-4-5-20251001.json
+date: 2026-05-06
 ---
 Classification Report
               precision    recall  f1-score   support
