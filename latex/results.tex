@@ -155,14 +155,7 @@ Anonymization has not degraded detection performance across all five datasets. I
 \label{subsec:policy_refinement_cost_features}
 %=======================================================================
 
-Table~\ref{tab:policy_refinement} reports the held-out test macro-averaged F1 of
-the combined majority-vote policy across rounds. The refinement loop optimizes a
-mean single-rule training-set F1 signal that the LLM observes, but the table
-evaluates the final selected rules on the held-out test split to measure actual
-generalization. The feedback loop does not improve monotonically. TON\_IoT and
-UNSW-NB15 improve from Round 1 to the best observed round. Bot-IoT and
-WUSTL-IIoT converge early and maintain their best score through Round 5.
-CIC-IoT2023 shows steady improvement across all rounds.
+Table~\ref{tab:policy_refinement} reports the held-out test macro-averaged F1 of the combined majority-vote policy across rounds. The refinement loop optimizes a mean single-rule training-set F1 signal that the LLM observes, but the table evaluates the final selected rules on the held-out test split to measure actual generalization. The feedback loop does not improve monotonically. TON\_IoT and UNSW-NB15 improve from Round 1 to the best observed round. WUSTL-IIoT converges at Round 1 and retains that score through Round 5. Bot-IoT peaks at Round 2 ($0.9232$) but does not retain the gain, returning to the Round 1 level by Round 5. CIC-IoT2023 improves from Round 1 to Round 4, where it reaches its best score and holds it through Round 5.
 
 \begin{table}[htbp]
 \centering
@@ -183,35 +176,39 @@ UNSW-NB15    & 0.7504 & 0.7507 (R3) & 0.7507 & $+$0.0003 \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:token_usage} reports token usage only where the current
-notebooks record prompt, completion, and total tokens. CIC-IoT2023, WUSTL-IIoT, and
-Bot-IoT have partial or incomplete token traces in the saved output.
-Therefore, the older claim about using a fixed percentage of the GPT-4o context
-window is not restated here. The current files also do not provide a documented
-pricing basis for the models used in these runs, so no dollar cost is reported.
+Table~\ref{tab:token_usage} reports cumulative token usage across five
+refinement rounds for the two datasets whose policy-refinement logs record
+per-round token counts. CIC-IoT2023 and WUSTL-IIoT both have complete
+five-round traces; TON\_IoT, Bot-IoT, and UNSW-NB15 did not produce
+policy-refinement summary files and are therefore excluded from the table.
+No dollar cost is reported, as the runs do not include a documented pricing
+basis for the model version used.
 
 \begin{table}[htbp]
 \centering
-\caption{Available token usage from current binary LLM notebooks.}
+\caption{Cumulative token usage over five policy-refinement rounds
+  (claude-haiku-4-5-20251001, seed~42). TON\_IoT, Bot-IoT, and UNSW-NB15
+  are excluded: no policy-refinement summary logs were produced for those datasets.}
 \label{tab:token_usage}
 \begin{tabular}{lccc}
 \toprule
 \textbf{Dataset} & \textbf{Prompt Tokens} & \textbf{Completion Tokens} & \textbf{Total Tokens} \\
 \midrule
-TON\_IoT  & 8{,}137 & 682 & 8{,}819 \\
-Bot-IoT   & 4{,}385 & 431 & 4{,}816 \\
-UNSW-NB15 & 5{,}801 & 265 & 6{,}066 \\
+CIC-IoT2023 & 35{,}986 & 2{,}980 & 38{,}966 \\
+WUSTL-IIoT  & 39{,}635 & 3{,}478 & 43{,}113 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The submitted version also reported faster policy inference than Decision
-Tree and Random Forest baselines. The current result files do not contain a
-matched timing benchmark for the same rows, preprocessing, hardware, and rule
-sets used in this section. The speed claim is therefore not repeated. To
-support it, the experiment should time DT, RF, and rule evaluation on the
-same test rows, repeat each condition at least 30 times, and report median
-milliseconds per row with an interquartile range.
+Table~\ref{tab:timing} reports median per-row inference latency from a
+matched benchmark in which LLM policy rules, Decision Tree, and Random
+Forest are evaluated on the same held-out test rows under identical
+preprocessing. Policy inference is consistently faster than Random Forest
+across all five datasets. Against Decision Tree, policy inference is faster on CIC-IoT2023 and WUSTL-IIoT but slower on TON\_IoT, Bot-IoT, and
+UNSW-NB15. The speed advantage over RF reflects the absence of tree
+traversal. The mixed result against DT reflects that shallow trees on
+low-dimensional feature sets can undercut the overhead of iterating over
+a list of threshold conditions.
 
 Table~\ref{tab:attack_precision_current} reports attack-class precision,
 recall, and F1 from the standardised binary evaluation
@@ -224,9 +221,7 @@ three-quarters of true attack flows are missed. This is consistent with the
 multi-class analysis in Section~\ref{subsec:multiclass_results}, which
 identifies TON\_IoT as a dataset with heavy intra-class overlap across its
 ten attack families. UNSW-NB15 achieves intermediate performance
-($0.81$/$0.66$). The results confirm that precision and recall must be
-reported together: binary separability is high for four of five datasets but
-collapses for TON\_IoT due to feature-space overlap.
+($0.81$/$0.66$). The results confirm that precision and recall must be reported together: binary separability is high for CIC-IoT2023, WUSTL-IIoT, and Bot-IoT, intermediate for UNSW-NB15 ($\text{F1} = 0.727$), and weak for TON\_IoT, where feature-space overlap causes recall to collapse.
 
 \begin{table}[htbp]
 \centering
