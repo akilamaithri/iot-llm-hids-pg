@@ -167,11 +167,11 @@ Table~\ref{tab:policy_refinement} reports the held-out test macro-averaged F1 of
 \toprule
 \textbf{Dataset} & \textbf{Round 1} & \textbf{Best} & \textbf{Round 5} & \textbf{Change} \\
 \midrule
-CIC-IoT2023  & 0.8007 & 0.9426 (R4) & 0.9426 & $+$0.1419 \\
+CIC-IoT2023  & 0.8007 & 0.9426 (R4) & 0.9426 & $+$0.1420 \\
 WUSTL-IIoT   & 0.9252 & 0.9252 (R1) & 0.9252 & $+$0.0000 \\
-TON\_IoT     & 0.4251 & 0.7701 (R4) & 0.7004 & $+$0.2750 \\
+TON\_IoT     & 0.4251 & 0.7701 (R4) & 0.7004 & $+$0.2753 \\
 Bot-IoT      & 0.7006 & 0.9232 (R2) & 0.7006 & $+$0.0000 \\
-UNSW-NB15    & 0.7504 & 0.7507 (R3) & 0.7507 & $+$0.0003 \\
+UNSW-NB15    & 0.7504 & 0.7507 (R2) & 0.7507 & $+$0.0003 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -271,7 +271,7 @@ top permutation-importance directions of either tree-based baseline.
 \midrule
 CIC-IoT2023 &
   rst\_count, Variance, Number, flow\_duration, urg\_count &
-  rst\_count, Protocol Type, syn\_count, DNS, ICMP &
+  rst\_count, Protocol Type, IAT, Covariance, Variance &
   flow\_duration, Header\_Length, Duration, Srate, ack\_flag\_number &
   1 & 0 \\
 WUSTL-IIoT &
