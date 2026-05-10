@@ -1,0 +1,16 @@
+Classification Report
+              precision    recall  f1-score   support
+
+         DoS     0.9994    1.0000    0.9997      1600
+      Reconn     1.0000    0.9994    0.9997      1600
+      normal     0.9994    0.9994    0.9994      1600
+
+    accuracy                         0.9996      4800
+   macro avg     0.9996    0.9996    0.9996      4800
+weighted avg     0.9996    0.9996    0.9996      4800
+
+
+Confusion Matrix
+[[1600    0    0]
+ [   0 1599    1]
+ [   1    0 1599]]
