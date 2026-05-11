@@ -1,0 +1,105 @@
+% Standalone TikZ source for Fig.~\ref{fig:architecture} in
+% system_architecture.tex. Compile with:
+%   pdflatex fig_architecture.tex
+% to produce fig_architecture.pdf, which the main paper includes via
+%   \includegraphics[width=\columnwidth]{figures/fig_architecture.pdf}
+%
+% Alternatively, paste the tikzpicture environment directly into
+% system_architecture.tex inside the figure environment.
+
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds, calc}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\footnotesize,
+    >={Stealth[length=4pt]},
+    node distance=4mm and 6mm,
+    box/.style={
+        draw, rounded corners=2pt, align=center,
+        minimum width=34mm, minimum height=7mm,
+        inner sep=2pt, fill=white
+    },
+    data/.style={
+        box, fill=blue!6, draw=blue!50!black
+    },
+    proc/.style={
+        box, fill=gray!8, draw=black!70
+    },
+    llm/.style={
+        box, fill=orange!12, draw=orange!70!black
+    },
+    artefact/.style={
+        box, fill=green!10, draw=green!50!black, font=\footnotesize\ttfamily
+    },
+    phase/.style={
+        rounded corners=4pt, draw=black!30, dashed, inner sep=4mm
+    },
+    arr/.style={->, thick, draw=black!70},
+    flow/.style={->, thick, draw=blue!60!black}
+]
+
+% =====================================================================
+% LEFT PHASE: Offline Policy Synthesis
+% =====================================================================
+\node[data] (train)               {Training flows};
+\node[proc, below=of train] (feat) {Featuriser \\ + permutation importance};
+\node[proc, below=of feat] (embed) {MPNet embedder};
+\node[data, below=of embed] (chroma) {Chroma vector store \\ (per-class labels)};
+\node[proc, below=of chroma] (retr) {Mean-embedding $k$-NN retrieval};
+\node[llm,  below=of retr] (prompt) {Claude Haiku 4.5 prompt \\ (samples + top features)};
+\node[llm,  below=of prompt] (loop) {Tool-using refinement loop};
+\node[artefact, below=of loop] (rules) {Rule set (JSON ACL tuples)};
+
+% Embedding -> store (sideways)
+\draw[arr] (train)  -- (feat);
+\draw[arr] (feat)   -- (embed);
+\draw[arr] (embed)  -- (chroma);
+\draw[arr] (chroma) -- (retr);
+\draw[arr] (retr)   -- (prompt);
+\draw[arr] (prompt) -- (loop);
+\draw[arr] (loop)   -- (rules);
+
+% Refinement back-edge
+\draw[arr, dashed, draw=orange!70!black]
+    (loop.east) .. controls +(12mm,0) and +(12mm,0) .. (prompt.east)
+    node[midway, right, font=\scriptsize\itshape, text=orange!70!black] {feedback};
+
+% Phase frame (left)
+\begin{scope}[on background layer]
+  \node[phase, fit=(train)(feat)(embed)(chroma)(retr)(prompt)(loop)(rules),
+        label={[font=\small\bfseries, anchor=north]north:Offline Policy Synthesis}]
+        (left) {};
+\end{scope}
+
+% =====================================================================
+% RIGHT PHASE: Online Detection
+% =====================================================================
+\node[data, right=24mm of train] (live) {Live IoT flow};
+\node[proc, below=of live] (feat2) {Featuriser};
+\node[proc, below=of feat2, minimum height=14mm] (eval)
+     {Rule evaluator \\ (vectorised threshold \\ comparison + majority vote)};
+\node[data, below=of eval] (verdict) {\texttt{normal} / \texttt{attack} / \texttt{anomaly flag}};
+
+\draw[arr] (live)  -- (feat2);
+\draw[arr] (feat2) -- (eval);
+\draw[arr] (eval)  -- (verdict);
+
+% Phase frame (right)
+\begin{scope}[on background layer]
+  \node[phase, fit=(live)(feat2)(eval)(verdict),
+        label={[font=\small\bfseries, anchor=north]north:Online Detection}]
+        (right) {};
+\end{scope}
+
+% =====================================================================
+% Cross-phase artefact handover
+% =====================================================================
+\draw[flow, very thick, draw=green!50!black]
+    (rules.east) .. controls +(20mm,0) and +(-20mm,-10mm) .. (eval.west)
+    node[midway, above, font=\scriptsize\itshape, text=green!50!black,
+         sloped] {deployed policy};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,100 @@
+\section{Introduction}
+\label{sec:intro}
+
+The Internet of Things now connects tens of billions of constrained
+devices, and every gateway that bridges those devices to the wider
+network is a high-value attack surface. Flow-level intrusion detection
+at the gateway is the standard line of defence, and recent benchmarks
+report near-perfect closed-set accuracy for gradient-trained
+classifiers on IoT traffic. The deployment story is less settled.
+A modern IoT gateway runs on a few hundred megabytes of memory and a
+single-digit-watt power envelope, and the same gradient-trained
+classifier that scores well in the benchmark must coexist with the
+gateway's primary routing workload at line rate. Large language models
+have transformed reasoning over heterogeneous tabular inputs and would
+in principle generalise across attack families without per-dataset
+retraining, yet a foundation-model inference per packet is
+incompatible with any realistic IoT edge budget.
+
+The Integrated Sensing, Memory, Communication, and Computation (SMCC)
+paradigm provides the architectural lens that resolves this tension.
+SMCC separates the offline ingestion and compression of training
+experience, the \emph{memory} stage, from the online line-rate
+response, the \emph{computation} stage. A detector designed under
+SMCC need not run the same machinery at training time and at
+inference time. Expensive reasoning happens once, offline, against a
+compact compressed view of the training distribution. The deployed
+component carries no model weights and issues no foundation-model
+call per flow. This split is what makes large-AI deployment on
+resource-constrained IoT gateways tractable rather than aspirational.
+
+We instantiate this split for IoT intrusion detection.
+A retrieval-augmented language model acts as the memory stage.
+\texttt{claude-haiku-4-5-20251001} (Claude Haiku 4.5) reads
+class-representative neighbours retrieved from a Chroma vector store
+of training flows and synthesises interpretable threshold rules once,
+offline, as a JSON policy. A stateless rule evaluator acts as the
+computation stage. It applies the policy to live flows as vectorised
+threshold comparisons that map directly onto access-control list
+firewall entries. No language-model call is required at inference
+time, and the runtime dependency is a few dozen comparisons per flow.
+The full offline policy-generation cost is approximately \$0.05 per
+dataset at current Claude Haiku 4.5 API rates, which is the price of
+a single training run rather than a recurring inference budget.
+
+The architecture is viable because retrieval-augmented prompts can
+recover the discriminative threshold structure of a benchmark IoT
+dataset from a small representative sample without gradient training.
+On datasets with well-separated traffic signatures the resulting
+policy matches Random Forest within $0.06$ macro-F1 while running
+4.5$\times$ to 80$\times$ faster per flow. On datasets with high
+intra-class overlap the policy degrades gracefully, and the same
+retrieval signal supplies a confidence score that flags
+out-of-distribution traffic. We name this confidence score
+Suspicious Multi-Class Confidence (SMCC, by construction aligned with
+the special-issue acronym), and use it to extend the closed-set
+detector to zero-day flows without retraining.
+
+The paper makes four contributions.
+
+\begin{itemize}
+  \item An SMCC-aligned architecture for IoT intrusion detection that
+    confines all foundation-model computation to an offline memory
+    stage and deploys the result as a stateless threshold-rule
+    evaluator. The runtime evaluator runs at line rate on commodity
+    gateway hardware and requires no model weights.
+
+  \item A multi-class evaluation across five IoT benchmarks
+    (CIC-IoT2023, WUSTL-IIoT, TON\_IoT, Bot-IoT, UNSW-NB15) that
+    characterises the operating envelope of LLM-generated threshold
+    rules. The LLM matches Random Forest within $0.06$ macro-F1 on
+    four of five datasets and exposes a structural expressiveness
+    ceiling on the fifth.
+
+  \item A retrieval-confidence protocol that extends the closed-set
+    detector to zero-day attack families. The Suspicious Multi-Class
+    Confidence score isolates the withheld attack class with
+    $\text{ZDR} \geq 0.999$ on two of five withholding scenarios
+    without any retraining of the policy.
+
+  \item A feature-name anonymization ablation and a Kerckhoffs-style
+    adversarial robustness study that together address the
+    trustworthiness axis of SMCC. Anonymizing feature names does not
+    degrade and in three of five cases improves detection F1, and
+    LLM-generated rules distribute evasion cost across multiple
+    features rather than concentrating it in a single bottleneck.
+\end{itemize}
+
+The remainder of the paper is organised as follows.
+Section~\ref{sec:related} surveys the closest prior work on
+LLM-assisted intrusion detection, retrieval-augmented generation, and
+edge deployment of foundation models.
+Section~\ref{sec:prelim} fixes notation and frames the SMCC
+memory-computation split that the rest of the paper exploits.
+Section~\ref{sec:architecture} describes the offline policy-synthesis
+pipeline and the online rule evaluator that together realise that
+split. Section~\ref{sec:framework} formalises the four evaluation
+protocols. Section~\ref{sec:resultsAndDisc} reports results across
+five IoT benchmarks and analyses the conditions under which the
+approach is deployable. The appendix contains per-class breakdowns
+and additional ablation tables.

@@ -1,0 +1,36 @@
+\section{Preliminaries}
+\label{sec:prelim}
+
+We address flow-level intrusion detection on IoT gateways. A flow
+$\mathbf{x} \in \mathbb{R}^{d}$ is a fixed-length vector of $d$ numeric
+descriptors derived from a network connection. A detector $f$ maps
+$\mathbf{x}$ to one of $K$ known attack-family labels in
+$\mathcal{K} = \{c_1, \dots, c_K\}$. The closed-set assumption is standard
+but brittle, and Section~\ref{subsec:zeroday} formalises a retrieval-confidence
+protocol that relaxes it for zero-day traffic.
+
+Retrieval-augmented generation (RAG) conditions a language model on content
+retrieved from an external store rather than on parametric memory alone. The
+canonical pattern embeds a corpus into a dense vector index and retrieves
+the top-$k$ neighbours of a query by cosine similarity as in-context
+evidence. We specialise this pattern to policy synthesis. The corpus is the
+training split of an IoT dataset, each flow is embedded under its class
+label, and the model emits a structured policy rather than free text. In
+the SMCC view of this special issue, the vector store and the language
+model together act as the \emph{memory} stage. They compress the training
+distribution into a retrieval index and a prompt context that are touched
+once at offline policy-generation time.
+
+A threshold rule is a tuple
+\texttt{(feature, op, value, target\_class)} that fires when the named
+feature of $\mathbf{x}$ satisfies the comparison. A policy is a set of such
+rules, and the detector evaluates every rule against $\mathbf{x}$ in a
+vectorised comparison and assigns the majority-vote class. Threshold rules
+are the same primitive that IoT gateways already execute as access-control
+list (ACL) firewall entries, so a generated policy deploys without new
+runtime infrastructure. In the SMCC view, the rule evaluator is the
+\emph{computation} stage. It runs at line rate, carries no model weights,
+and issues no language-model call per flow.
+Section~\ref{sec:architecture} composes these two primitives into the
+end-to-end system, and Section~\ref{sec:framework} defines the four
+protocols that exercise it.

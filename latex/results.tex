@@ -82,7 +82,7 @@ CIC-IoT2023 produces a 2$\times$ gap ($0.45$ vs.\ $0.89$), where eight attack fa
 
 The 9$\times$ gap on UNSW-NB15 ($0.07$ vs.\ $0.63$) reflects a structural dataset-level constraint that affects all methods. Even Random Forest struggles on Analysis~(0.32), Backdoor~(0.24), and DoS~(0.27), confirming that the nine sub-class families share statistical signatures at the feature level. The LLM failure mode is rule convergence. Multiple attack classes independently generate near-identical volume-based thresholds, causing the proportion-of-rules-fired scorer to tie and default to the Normal label (Fig.~\ref{fig:confusion_multiclass}b). Generic and Reconnaissance illustrate this precisely, with precision of $1.00$ but recall of $0.02$ and $0.007$ respectively. The rules fire correctly but so rarely that more than 90\% of true attack instances are missed. UNSW-NB15's sub-class families are statistically indistinguishable in the sampled feature space, and zero-shot rule generation cannot resolve this ambiguity without gradient-based training on the discriminative directions between classes.
 
-TON\_IoT and Bot-IoT are evaluated in binary rather than multi-class mode. Bot-IoT's corpus is limited to 740 training samples to preserve class balance, which is insufficient for stable per-class rule generation across five attack families. TON\_IoT's ten attack families exhibit heavy intra-class overlap at the flow level and are therefore evaluated in the zero-day and anonymization settings, where that overlap structure is the subject of analysis rather than an obstacle. Binary classification baselines for both datasets appear alongside all five datasets in Table~\ref{tab:anon_ablation}.
+TON\_IoT and Bot-IoT are evaluated in binary rather than multi-class mode. Bot-IoT's corpus is limited to 740 training samples to preserve class balance, which is insufficient for stable per-class rule generation across five attack families. TON\_IoT's ten attack families exhibit heavy intra-class overlap at the flow level and are therefore evaluated in the zero-day and anonymization settings, where that overlap structure is the subject of analysis rather than an obstacle. Binary ML baselines confirm near-perfect separability for both datasets: TON\_IoT achieves RF~$0.9999$ and DT~$0.9998$; Bot-IoT achieves RF~$1.000$ and DT~$0.9996$ (macro-averaged F1, mean over ten runs). The LLM best-round F1 for both datasets is reported in Table~\ref{tab:policy_refinement}.
 
 \subsection{Zero-Day Detection Analysis}
 \label{subsec:zeroday_results}
@@ -226,6 +226,22 @@ UNSW-NB15    & 0.060 & 4.70  & 0.066 & 71$\times$ \\
 \end{tabular}
 \end{table}
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_comparison_summary.pdf}
+  \caption{Binary macro-averaged F1~(a) and per-row inference latency~(b) across all five
+    datasets. LLM values are best-round results from Table~\ref{tab:policy_refinement}.
+    RF and DT are binary baselines averaged over ten runs.
+    Speedup annotations in~(b) report the LLM/RF latency ratio.}
+  \label{fig:comparison_summary}
+\end{figure*}
+
+Fig.~\ref{fig:comparison_summary} places both axes of comparison in a single view.
+Panel~(a) shows that the LLM best-round F1 falls within $0.06$ of RF on four of the five datasets.
+The sole substantial gap is TON\_IoT ($0.77$ vs.\ $1.00$), a direct consequence of the intra-class overlap identified in Section~\ref{subsec:multiclass_results} and not a general limitation of the approach.
+Panel~(b) confirms the latency asymmetry on a log scale.
+RF bars stand one to two orders of magnitude above the LLM bars on every dataset, establishing that the speed advantage is structural across all five configurations.
+
 Table~\ref{tab:attack_precision_current} confirms the precision/recall pattern predicted by each dataset's class structure. Well-separated datasets achieve $\text{F1} \geq 0.96$. TON\_IoT recall collapses to $0.24$ under heavy intra-class overlap and UNSW-NB15 reaches an intermediate $0.73$, both consistent with Section~\ref{subsec:multiclass_results}.
 
 \begin{table}[htbp]
@@ -339,12 +355,9 @@ property rather than a withheld-class artefact. CIC-IoT2023 sub-variant traffic 
 \label{sec:kerckhoffs}
 % ==============================================================
 
-% TODO: Move to methods section -- threat model definition, metric setup ($\varepsilon$@ESR=0.5), and condition list belong there.
-% We evaluate evasion resilience under a Kerckhoffs-style threat model in which the attacker has full knowledge of the detection rules and applies the minimum feature perturbation (in standard-deviation units, $\varepsilon$) to evade detection. The summary metric is $\varepsilon$@ESR=0.5: the budget at which 50\% of flagged attacks are successfully evaded. We compare \texttt{LLM\textsubscript{orig}},
-% \texttt{LLM\textsubscript{anon}}, \texttt{DT\textsubscript{d=3}},
-% \texttt{DT\textsubscript{d=5}}, and \texttt{RF\textsubscript{d=5}} across
-% CIC-IoT2023 and WUSTL-IIoT, with results validated over three random seeds.
-ESR curves are shown in Fig.~\ref{fig:robustness_curves}.
+Following the protocol defined in \S\ref{subsec:kerckhoffs}, we report
+$\varepsilon$@ESR=0.5 for the five detection conditions across CIC-IoT2023
+and WUSTL-IIoT. ESR curves are shown in Fig.~\ref{fig:robustness_curves}.
 
 \begin{table}[htbp]
   \centering
