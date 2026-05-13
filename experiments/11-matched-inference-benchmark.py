@@ -659,7 +659,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     return parser.parse_args()
 
-
 def main() -> None:
     args = parse_args()
     if args.repeats < 30:

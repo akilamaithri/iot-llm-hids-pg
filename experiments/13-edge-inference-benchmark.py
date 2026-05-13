@@ -481,18 +481,29 @@ def machine_metadata() -> dict[str, Any]:
     }
 
 
-def trim_prepared(prepared: Any, rows: int | None) -> Any:
+def trim_prepared(
+    prepared: Any,
+    rows: int | None,
+    rows_sample_mode: str,
+    rows_sample_seed: int,
+) -> Any:
     if rows is None:
         return prepared
     limit = min(rows, len(prepared.x_test))
+    if rows_sample_mode == "random":
+        selected_index = prepared.x_test.sample(n=limit, random_state=rows_sample_seed).index
+    elif rows_sample_mode == "head":
+        selected_index = prepared.x_test.index[:limit]
+    else:
+        raise ValueError(f"Unsupported rows_sample_mode {rows_sample_mode!r}")
     return bench.PreparedDataset(
         config=prepared.config,
         raw_train=prepared.raw_train,
-        raw_test=prepared.raw_test.iloc[:limit].copy(),
+        raw_test=prepared.raw_test.loc[selected_index].copy(),
         x_train=prepared.x_train,
         y_train=prepared.y_train,
-        x_test=prepared.x_test.iloc[:limit].copy(),
-        y_test=prepared.y_test.iloc[:limit].copy(),
+        x_test=prepared.x_test.loc[selected_index].copy(),
+        y_test=prepared.y_test.loc[selected_index].copy(),
         categorical_cols=prepared.categorical_cols,
     )
 
@@ -608,6 +619,8 @@ def benchmark_dataset(
     modes: list[str],
     batch_size: int | None,
     rows_limit: int | None,
+    rows_sample_mode: str,
+    rows_sample_seed: int,
     repeats: int,
     warmups: int,
     telemetry_hz: float,
@@ -617,7 +630,12 @@ def benchmark_dataset(
     policy = policies[dataset_key]
     _raw_a, _raw_b, source = bench.load_raw_frames(config)
     rss_before_prepare = current_rss_bytes()
-    prepared = trim_prepared(bench.prepare_dataset(config), rows_limit)
+    prepared = trim_prepared(
+        bench.prepare_dataset(config),
+        rows=rows_limit,
+        rows_sample_mode=rows_sample_mode,
+        rows_sample_seed=rows_sample_seed,
+    )
     rss_after_prepare = current_rss_bytes()
     rows = len(prepared.x_test)
     if rows == 0:
@@ -631,6 +649,8 @@ def benchmark_dataset(
             "source": source,
             "rows": rows,
             "rows_limit": rows_limit,
+            "rows_sample_mode": rows_sample_mode if rows_limit is not None else "all",
+            "rows_sample_seed": rows_sample_seed if rows_limit is not None else None,
             "repeats": repeats,
             "warmups": warmups,
             "telemetry_hz": telemetry_hz,
@@ -739,6 +759,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmups", type=int, default=5)
     parser.add_argument("--telemetry-hz", type=float, default=2.0)
     parser.add_argument("--rows", type=int, default=None, help="Limit test rows for smoke tests.")
+    parser.add_argument(
+        "--rows-sample-mode",
+        choices=["random", "head"],
+        default="random",
+        help="How to choose rows when --rows is set. Default: random.",
+    )
+    parser.add_argument(
+        "--rows-sample-seed",
+        type=int,
+        default=42,
+        help="Random seed used when --rows-sample-mode=random.",
+    )
     parser.add_argument("--skip-missing", action="store_true")
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--policy-path", type=Path, default=DEFAULT_POLICY_PATH)
@@ -773,6 +805,8 @@ def main() -> None:
                 modes=modes,
                 batch_size=args.batch_size,
                 rows_limit=args.rows,
+                rows_sample_mode=args.rows_sample_mode,
+                rows_sample_seed=args.rows_sample_seed,
                 repeats=args.repeats,
                 warmups=args.warmups,
                 telemetry_hz=args.telemetry_hz,

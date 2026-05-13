@@ -4,6 +4,30 @@ This runbook measures deployed IDS inference on Raspberry Pi 4 and Raspberry Pi 
 
 The benchmark records software telemetry only. CPU time, frequency, temperature, memory, and throttling are resource proxies. Do not report watts or joules per flow unless an external power meter is added.
 
+## What This Benchmark Does
+
+Yes, this benchmark performs inference on the datasets. It does not infer from raw packets or live traffic yet. It reads the same CSV flow-feature datasets used by the existing notebook and benchmark code, recreates the train/test split, and runs inference on the held-out test rows.
+
+The flow is:
+
+1. Load a dataset CSV, for example `1-cic-iot/data/sample-100000-2.csv`.
+2. Recreate the same train/test split used by `experiments/11-matched-inference-benchmark.py`.
+3. Train DT/RF baselines on the training rows when those conditions are selected. This happens before timing.
+4. Load the LLM rule policy from `experiments/policies/llm-rule-policies.json`.
+5. Run inference on the test rows:
+   - `LLM_rule_policy`: applies threshold rules and majority vote.
+   - `DT`: calls `DecisionTreeClassifier.predict`.
+   - `RF`: calls `RandomForestClassifier.predict`.
+6. Measure latency, throughput, memory, CPU time, temperature, frequency, and throttling while inference runs.
+7. Write CSV/JSON results under `experiments/results/edge/`.
+
+There are two inference modes:
+
+- `streaming`: evaluates one dataset row at a time. This is closest to a live gateway receiving one flow at a time.
+- `batch`: evaluates many rows together. This gives best-case throughput when flows can be buffered.
+
+Use `--rows 100` only for smoke tests. When `--rows` is set, the script now selects a reproducible random sample from the held-out test split by default with `--rows-sample-seed 42`. Omit `--rows` for the real paper run so the full held-out test split is used.
+
 ## 1. Prepare Each Raspberry Pi
 
 Use Raspberry Pi OS 64-bit Lite on both devices where possible.
@@ -78,6 +102,7 @@ python3 experiments/13-edge-inference-benchmark.py \
   --condition llm \
   --mode all \
   --rows 100 \
+  --rows-sample-seed 42 \
   --repeats 3 \
   --warmups 1 \
   --allow-few-repeats
@@ -90,9 +115,13 @@ experiments/results/edge/pi-edge-benchmark-latest.csv
 experiments/results/edge/pi-edge-benchmark-latest.json
 ```
 
+For this smoke test, only 100 randomly sampled test rows are inferred. That confirms the code path works before doing a longer run.
+
 ## 5. Run Paper Benchmarks
 
 Run each condition on each device. Keep the Pi idle except for the benchmark.
+
+This command performs streaming inference on the full CIC-IoT2023 held-out test split. It includes all three detector conditions.
 
 ```bash
 python3 experiments/13-edge-inference-benchmark.py \
@@ -106,6 +135,8 @@ python3 experiments/13-edge-inference-benchmark.py \
 ```
 
 Run batch mode at the planned batch sizes.
+
+These commands perform batch inference on the same held-out test split, changing only the number of rows passed to each inference call.
 
 ```bash
 for size in 16 128 1024 full; do
