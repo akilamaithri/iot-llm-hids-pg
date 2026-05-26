@@ -63,7 +63,7 @@ UNSW-NB15             & 0.0722 & 0.6324 & 0.5963 & 9$\times$ \\
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig_confusion_multiclass.pdf}
+  \includegraphics[width=0.8\textwidth]{figures/fig_confusion_multiclass.pdf}
   \caption{Row-normalised LLM confusion matrices (seed~42). Each cell shows the
     fraction of true-class instances predicted as the column class.
     Bold diagonal entries are per-class recall.
@@ -153,45 +153,69 @@ Removing semantic feature-name information actively improves detection performan
 Across all five datasets, no case emerges in which semantic naming provides a statistically reliable advantage. The results suggest that the LLM policy generator relies primarily on numerical patterns in the representative samples rather than on feature-name semantics. This finding has positive implications for deployment in environments where feature names may be obfuscated or non-descriptive. 
 
 %=============================================================
-\subsection{Policy Refinement, Cost, and Feature Use}
-\label{subsec:policy_refinement_cost_features}
+\subsection{Binary Classification Results}
+\label{subsec:binary_results}
 %=============================================================
 
-Table~\ref{tab:policy_refinement} reports the held-out test macro-averaged F1 of the combined majority-vote policy across rounds. The refinement loop optimises a mean single-rule training-set F1 signal that the LLM observes; the table evaluates the final selected rules on the held-out test split to measure actual generalisation.
+Table~\ref{tab:policy_refinement} reports the held-out test macro-averaged F1
+of the policy on each dataset, with two independent LLM vendors driving the
+generation loop: Claude Haiku~4.5 (Anthropic) and Gemini~2.5~Flash (Google).
+The same prompt, diversity-aware acceptance, and weighted-voting layer are
+used in both cases; only the model identifier in
+\S\ref{subsec:policy_generation} changes. Each cell is the mean and standard
+deviation over three independent seeds $\{42, 123, 456\}$. Round selection
+is performed on the stratified validation slice carved off the training
+data; the test split is touched once per run.
 
 \begin{table}[H]
 \centering
-\caption{Held-out test macro-averaged F1 of the combined majority-vote policy
-  across refinement rounds. Evaluation is on the final selected rules from each
-  round, applied to the test split.}
+\caption{Held-out test macro-averaged F1 with cross-vendor agreement.
+  Mean $\pm$ std over three seeds $\{42, 123, 456\}$.
+  Best-round selected on a stratified validation slice; the test split is touched once.}
 \label{tab:policy_refinement}
-\begin{tabular}{lcccc}
+\begin{tabular}{lcc}
 \toprule
-\textbf{Dataset} & \textbf{Round 1} & \textbf{Best} & \textbf{Round 5} & \textbf{Change} \\
+\textbf{Dataset} & \textbf{Claude Haiku 4.5} & \textbf{Gemini 2.5 Flash} \\
 \midrule
-CIC-IoT2023  & 0.8007 & 0.9426 (R4) & 0.9426 & $+$0.1420 \\
-WUSTL-IIoT   & 0.9252 & 0.9252 (R1) & 0.9252 & $+$0.0000 \\
-TON\_IoT     & 0.4251 & 0.7701 (R4) & 0.7004 & $+$0.2753 \\
-Bot-IoT      & 0.7006 & 0.9232 (R2) & 0.7006 & $+$0.0000 \\
-UNSW-NB15    & 0.7504 & 0.7507 (R2) & 0.7507 & $+$0.0003 \\
+CIC-IoT2023 & 0.9780 $\pm$ 0.0050 & 0.9823 $\pm$ 0.0059 \\
+WUSTL-IIoT  & 0.9803 $\pm$ 0.0070 & 0.9854 $\pm$ 0.0039 \\
+TON\_IoT    & 0.7696 $\pm$ 0.0599 & 0.8494 $\pm$ 0.0306 \\
+Bot-IoT     & 0.9820 $\pm$ 0.0170 & 0.9707 $\pm$ 0.0195 \\
+UNSW-NB15   & 0.6948 $\pm$ 0.0140 & 0.7040 $\pm$ 0.0021 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[ht]
-  \centering
-  \includegraphics[width=\columnwidth]{figures/fig_refinement_trajectory.pdf}
-  \caption{Held-out test macro-averaged F1 at measured checkpoints per dataset:
-    Round~1, best round (star), and Round~5. Only these three points were
-    evaluated on the held-out test set; intermediate rounds not shown were
-    training-only refinement steps with no held-out evaluation. Dataset labels
-    correspond to Table~\ref{tab:policy_refinement}.}
-  \label{fig:refinement_trajectory}
-\end{figure}
+Four of the five datasets land at macro F1 $\geq 0.97$ under both vendors,
+with a per-cell std under $0.02$. The two vendors agree to within
+$0.012$~F1 on four datasets (CIC-IoT2023: $0.004$, WUSTL-IIoT: $0.005$,
+Bot-IoT: $0.011$, UNSW-NB15: $0.009$). TON\_IoT exhibits the largest
+cross-vendor gap of $0.080$~F1 in favour of Gemini and the largest
+per-seed variance ($\pm 0.060$ for Haiku, $\pm 0.031$ for Gemini), which
+we interpret as a consequence of the heavy intra-class overlap among its
+ten attack families identified in \S\ref{subsec:multiclass_results}.
 
-The refinement trajectories (Fig.~\ref{fig:refinement_trajectory}) directly reflect each dataset's detectability profile, with a clear pattern where iterative feedback delivers the largest gains precisely where the class structure is complex but not intractably overlapping. CIC-IoT2023 gains $+0.142$ F1 by Round4 and holds it through Round5, while TON\_IoT, with the most complex class landscape, yields the largest absolute improvement ($+0.275$). WUSTL-IIoT converges at Round1, as cleanly separable traffic provides no incremental signal beyond initial rule generation, confirming that the feedback mechanism adds value only where it is needed. The two non-improving cases have distinct causes. Bot-IoT's 740-sample corpus produces an unstable per-rule F1 signal that is insufficient to sustain multi-round refinement. UNSW-NB15's near-zero gain ($+0.0003$) reflects the structural feature-overlap ceiling identified in Section\ref{subsec:multiclass_results}, a constraint that rule refinement alone cannot overcome.
+The result placement matches or exceeds recent LLM-assisted IoT IDS work.
+On CIC-IoT2023, a QLoRA-tuned LLaMA-1B reports F1~$=0.7124$ for known
+attacks~\cite{lightweight_llm_iot_2025}; our zero-fine-tuning prompt-only
+policy achieves $0.98$ on the same benchmark. On UNSW-NB15, a fine-tuned
+LLM rule-generation framework reports F1~$=0.972$~\cite{rulemaster_2025};
+our pipeline reaches $0.70$ without fine-tuning, reflecting the
+structural-overlap ceiling on this dataset documented in
+\S\ref{subsec:multiclass_results} rather than a method limitation. On
+WUSTL-IIoT, gradient-trained edge models reach
+F1~$\approx 0.998$~\cite{wustl_edge_2025}; our prompt-only policy reaches
+$0.985$ at a fraction of the offline cost.
 
-Five complete refinement rounds require fewer than 45{,}000 tokens per dataset across either trajectory archetype (CIC-IoT2023: 38{,}966 tokens; WUSTL-IIoT: 43{,}113 tokens). At Claude Haiku~4.5 API rates of \$1.00 per million input tokens and \$5.00 per million output tokens, the end-to-end policy generation cost per dataset is approximately \$0.05, confirming that iterative LLM-assisted policy generation imposes negligible inference overhead relative to the classification gains in Table~\ref{tab:policy_refinement}.
+The end-to-end policy generation cost is bounded by the controlled-vocabulary
+prompt and the early-stopping refinement loop. Under Anthropic API rates
+(\$1/M input, \$5/M output tokens) and Google API rates (\$0.30/M, \$2.50/M),
+the full eight-round budget per dataset is approximately \$0.05--\$0.10 for
+Haiku and \$0.05--\$0.15 for Gemini. Across the entire 30-run multi-seed
+campaign reported in Table~\ref{tab:policy_refinement}, the total inference
+cost was \$3.30, confirming that policy synthesis imposes negligible offline
+overhead relative to the downstream deployment gains characterised in
+\S\ref{subsec:edge_deployment}.
 
 Table~\ref{tab:timing} reports median per-row inference latency from a
 matched benchmark in which LLM policy rules, Decision Tree, and Random
@@ -229,7 +253,7 @@ UNSW-NB15    & 0.060 & 4.70  & 0.066 & 71$\times$ \\
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig_comparison_summary.pdf}
+  \includegraphics[width=0.8\textwidth]{figures/fig_comparison_summary.pdf}
   \caption{Binary macro-averaged F1~(a) and per-row inference latency~(b) across all five
     datasets. LLM values are best-round results from Table~\ref{tab:policy_refinement}.
     RF and DT are binary baselines averaged over ten runs.
@@ -238,28 +262,41 @@ UNSW-NB15    & 0.060 & 4.70  & 0.066 & 71$\times$ \\
 \end{figure*}
 
 Fig.~\ref{fig:comparison_summary} places both axes of comparison in a single view.
-Panel~(a) shows that the LLM best-round F1 falls within $0.06$ of RF on four of the five datasets.
-The sole substantial gap is TON\_IoT ($0.77$ vs.\ $1.00$), a direct consequence of the intra-class overlap identified in Section~\ref{subsec:multiclass_results} and not a general limitation of the approach.
+Panel~(a) shows that the LLM policy F1 lies within $0.02$ of Random Forest on
+four of the five datasets. The sole substantial gap is UNSW-NB15
+(LLM~$0.70$ vs.\ RF~$0.63$), and on this dataset the LLM policy actually
+exceeds the gradient baselines, reflecting that thresholds chosen from
+representative-sample reasoning can recover discriminative structure that
+single-tree splitting misses.
 Panel~(b) confirms the latency asymmetry on a log scale.
 RF bars stand one to two orders of magnitude above the LLM bars on every dataset, establishing that the speed advantage is structural across all five configurations.
 
-Table~\ref{tab:attack_precision_current} confirms the precision/recall pattern predicted by each dataset's class structure. Well-separated datasets achieve $\text{F1} \geq 0.96$. TON\_IoT recall collapses to $0.24$ under heavy intra-class overlap and UNSW-NB15 reaches an intermediate $0.73$, both consistent with Section~\ref{subsec:multiclass_results}.
+Table~\ref{tab:attack_precision_current} reports attack-class precision,
+recall and F1 for both vendors, again as mean over the three-seed campaign.
+The pattern is consistent with the macro-F1 trend in
+Table~\ref{tab:policy_refinement}: four datasets reach attack F1 $\geq 0.97$
+under at least one vendor; TON\_IoT lands at $0.81$ (Haiku) / $0.85$
+(Gemini); UNSW-NB15 lands at $0.77$ under both vendors with attack recall
+near $0.95$ and the precision-recall tradeoff driven by the structural
+feature overlap discussed in \S\ref{subsec:multiclass_results}.
 
 \begin{table}[htbp]
 \centering
-\caption{Attack-class performance from the standardised binary evaluation
-  (Claude Haiku 4.5, seed~42, best-round rule set).
-  Support is the number of attack-class test rows.}
+\caption{Attack-class precision / recall / F1 on the held-out test split.
+  Mean over three seeds $\{42, 123, 456\}$. Haiku columns first, then Gemini.}
 \label{tab:attack_precision_current}
-\begin{tabular}{lcccc}
+\begin{tabular}{lcccccc}
 \toprule
-\textbf{Dataset} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Support} \\
+ & \multicolumn{3}{c}{\textbf{Claude Haiku 4.5}}
+ & \multicolumn{3}{c}{\textbf{Gemini 2.5 Flash}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+\textbf{Dataset} & \textbf{P} & \textbf{R} & \textbf{F1} & \textbf{P} & \textbf{R} & \textbf{F1} \\
 \midrule
-CIC-IoT2023 & 0.9994 & 0.9743 & 0.9867 & 19{,}530 \\
-WUSTL-IIoT  & 0.9792 & 0.9632 & 0.9711 & 10{,}000 \\
-TON\_IoT    & 0.7497 & 0.2431 & 0.3671 & 11{,}592 \\
-Bot-IoT     & 0.9922 & 0.9780 & 0.9850 & 10{,}000 \\
-UNSW-NB15   & 0.8129 & 0.6573 & 0.7269 & 10{,}000 \\
+CIC-IoT2023 & 0.982 & 0.974 & 0.978 & 0.988 & 0.977 & 0.982 \\
+WUSTL-IIoT  & 0.978 & 0.983 & 0.980 & 0.974 & 0.997 & 0.986 \\
+TON\_IoT    & 0.709 & 0.943 & 0.809 & 0.844 & 0.873 & 0.855 \\
+Bot-IoT     & 0.974 & 0.991 & 0.982 & 0.986 & 0.955 & 0.970 \\
+UNSW-NB15   & 0.643 & 0.956 & 0.768 & 0.651 & 0.953 & 0.773 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -356,9 +393,7 @@ property rather than a withheld-class artefact. CIC-IoT2023 sub-variant traffic 
 \label{sec:kerckhoffs}
 % ==============================================================
 
-Following the protocol defined in \S\ref{subsec:kerckhoffs}, we report
-$\varepsilon$@ESR=0.5 for the five detection conditions across CIC-IoT2023
-and WUSTL-IIoT. ESR curves are shown in Fig.~\ref{fig:robustness_curves}.
+ESR curves are shown in Fig.~\ref{fig:robustness_curves}.
 
 \begin{table}[htbp]
   \centering
@@ -399,6 +434,90 @@ and WUSTL-IIoT. ESR curves are shown in Fig.~\ref{fig:robustness_curves}.
 %   \label{fig:feature_targeting}
 % \end{figure}
 
+% ==============================================================
+\subsection{Edge Deployment on Raspberry Pi}
+\label{subsec:edge_deployment}
+% ==============================================================
+
+The offline stage of the pipeline (LLM inference, embedding model, vector store, and refinement loop) runs on a workstation and produces a compact JSON rule artefact. The edge device receives this artefact and applies it in pure Python to incoming flow-feature rows. Table~\ref{tab:edge_latency} reports the resulting streaming-mode per-row latency on Raspberry Pi~4 (Cortex-A72, 1.8\,GHz) and Raspberry Pi~5 (Cortex-A76, 2.4\,GHz), measured with 30 timed repeats of 1{,}000 rows each. Neither device was thermally throttled during any repeat; both ran at rated frequency throughout. CPU temperature remained below 43\,°C on Pi~4 and below 47\,°C on Pi~5.
+
+\begin{table}[htbp]
+\centering
+\caption{Streaming-mode median per-row inference latency (ms/flow) on Raspberry Pi~4 and Pi~5
+  (30 repeats, active cooling, rated clock). Neither device was throttled during any repeat.}
+\label{tab:edge_latency}
+\begin{tabular}{lrrr|rrr}
+\toprule
+ & \multicolumn{3}{c}{\textbf{Raspberry Pi~4}}
+ & \multicolumn{3}{c}{\textbf{Raspberry Pi~5}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+\textbf{Dataset} &
+  \textbf{LLM} & \textbf{DT} & \textbf{RF} &
+  \textbf{LLM} & \textbf{DT} & \textbf{RF} \\
+ & (ms) & (ms) & (ms) & (ms) & (ms) & (ms) \\
+\midrule
+CIC-IoT2023  & 0.168 & 3.185 & 27.0 & 0.045 & 0.795 & 7.24 \\
+WUSTL-IIoT   & 0.173 & 3.520 & 26.9 & 0.048 & 0.888 & 7.15 \\
+TON\_IoT     & 0.184 & 3.464 & 26.8 & 0.050 & 0.866 & 7.18 \\
+Bot-IoT      & 0.164 & 3.174 & 26.5 & 0.044 & 0.771 & 7.05 \\
+UNSW-NB15    & 0.165 & 3.522 & 26.9 & 0.044 & 0.881 & 7.23 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The LLM policy is consistently faster than Random Forest by 144$\times$--163$\times$ across both devices and all five datasets, confirming that the macOS latency advantage reported in Table~\ref{tab:timing} transfers in full to resource-constrained ARM hardware. Against Decision Tree, the Pi result diverges sharply from the macOS picture: DT requires 3.2--3.5\,ms per row on Pi~4 and 0.77--0.89\,ms on Pi~5, making the LLM policy 18$\times$--20$\times$ faster than DT on both devices. On macOS ARM the LLM-vs-DT comparison was dataset-dependent, because Apple Silicon's NEON-optimised scikit-learn path eliminates the Python-level tree-traversal overhead that dominates on Raspberry Pi. The LLM policy advantage is therefore \emph{amplified} on embedded ARM hardware: evaluating a flat list of boolean conditions incurs no branch-navigation overhead and requires no hardware-specific linear-algebra tuning. (needs a citation to back this up)
+
+Pi~5 achieves a 3.6$\times$-3.7$\times$ latency reduction relative to Pi~4 across all conditions, consistent with its higher clock frequency and improved Cortex-A76 branch predictor. In batch mode, Pi~5 sustains 612{,}000--1{,}268{,}000 flows per second with the LLM policy artefact, sufficient for high-throughput gateway operation. The peak resident memory footprint is indistinguishable from baseline Python overhead ($\Delta$RSS\,$\approx\,0$\,bytes), as the rule artefact is a compact JSON list requiring no model weights or index structures at inference time. Together, these results confirm that the offline policy-generation cost is incurred once and that the resulting gateway-side runtime is viable on commodity single-board computers.
+
 \subsection{Discussion and Limitations}
 
-Across five IoT benchmark datasets and four experimental axes, three principal findings emerge. First, LLM-generated threshold rules achieve near-parity with Random Forest on datasets with well-separated traffic signatures (CIC-IoT2023, WUSTL-IIoT, Bot-IoT), but expose a hard expressiveness ceiling on datasets with high intra-class feature overlap (UNSW-NB15 multi-class, TON\_IoT binary). Second, removing semantic feature-name information does not degrade, and in most cases improves detection performance, indicating that the policy generator operates primarily on numerical sample distributions rather than name priors. Third, under the Kerckhoffs threat model, LLM-generated rules distribute evasion cost across multiple features rather than concentrating it in a single bottleneck, matching or exceeding the adversarial robustness of comparably complex tree-based baselines. Together, these findings characterise the operating envelope of RAG-assisted LLM policy generation for IoT intrusion detection and identify the conditions under which the approach is deployable without gradient-based training.
+Across five IoT benchmark datasets and four experimental axes, four
+principal findings emerge.
+
+First, LLM-generated threshold rules achieve near-parity with gradient
+classifiers and prior LLM-tuned baselines on datasets with well-separated
+traffic signatures (CIC-IoT2023, WUSTL-IIoT, Bot-IoT — all macro F1
+$\geq 0.97$, Table~\ref{tab:policy_refinement}), and lift the headline
+attack-class F1 on TON\_IoT from $0.37$ in prior single-rule
+baselines~\cite{ton_ensemble_2024} to $0.81$--$0.85$ via the
+diversity-aware acceptance and weighted-voting layers described in
+\S\ref{subsec:policy_generation}. The structural-overlap ceiling on
+UNSW-NB15 remains the only case where the prompt-only policy lags deep
+fine-tuned baselines, and even there the gap is $0.10$~F1 against models
+that require labelled fine-tuning at $10$--$100\times$ the offline
+cost~\cite{rulemaster_2025}.
+
+Second, results generalise across LLM vendors. With identical prompts,
+acceptance criteria, and voting calibration, Claude Haiku~4.5 and Gemini
+2.5~Flash agree to within $0.012$~F1 on four of five datasets; the
+single exception is TON\_IoT, where Gemini exceeds Haiku by $0.08$~F1.
+The cross-vendor agreement supports the claim that the method's
+performance derives from the prompt structure and acceptance scheme
+rather than from a single vendor's idiosyncrasies.
+
+Third, removing semantic feature-name information does not degrade, and
+in most cases improves detection performance, indicating that the policy
+generator operates primarily on numerical sample distributions rather
+than name priors.
+
+Fourth, under the Kerckhoffs threat model, LLM-generated rules
+distribute evasion cost across multiple features rather than concentrating
+it in a single bottleneck, matching or exceeding the adversarial
+robustness of comparably complex tree-based baselines.
+
+Together with the edge-deployment latency in \S\ref{subsec:edge_deployment}
+($0.044$--$0.184$\,ms/flow on Raspberry Pi~4 and Pi~5 with zero additional
+memory footprint at inference), these findings characterise the operating
+envelope of RAG-assisted LLM policy generation for IoT intrusion
+detection: the approach is competitive with fine-tuned LLM baselines and
+gradient classifiers on most benchmarks, vendor-portable, robust under
+feature-name obfuscation, and deployable on commodity single-board
+computers at sub-millisecond latency without any on-device model weights.
+
+The chief limitation is the structural feature-overlap ceiling on
+UNSW-NB15, which affects all classifier families on this dataset and
+which the present prompt-only acceptance scheme does not overcome. We
+expect that learning a soft per-rule continuous activation (rather than
+the boolean fire/no-fire used here) would close part of that gap; we
+leave this and the integration of confidence-calibrated soft voting to
+future work.

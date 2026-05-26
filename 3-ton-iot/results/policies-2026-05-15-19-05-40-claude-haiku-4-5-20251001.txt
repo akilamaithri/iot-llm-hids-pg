@@ -1,0 +1,40 @@
+>>> Results for claude-haiku-4-5-20251001 of sample size 100000
+
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| feature      | operator   | value   |   f1_score | comment                                                                                                                                                                                                   |
++==============+============+=========+============+===========================================================================================================================================================================================================+
+| proto        | ==         | tcp     |     0.8312 | Consistent high performer. Direct positive indicator of TCP protocol remains marginally more effective than negation-based approaches for attack detection.                                               |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| service      | !=         | dns     |     0.8085 | Negation-based DNS service exclusion captures a broader range of attack patterns compared to specific value matching, demonstrating that attacks predominantly avoid standard DNS service identification. |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| dst_port     | !=         | 53      |     0.7684 | Inequality operator provides superior discrimination by excluding all DNS traffic comprehensively, outperforming alternative operators and remaining optimal across evaluations.                          |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| dst_pkts     | >          | 0       |     0.703  | This is the first policy for this feature. Identifies connections with destination packets received; attacks often have minimal or no response packets from destination.                                  |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| dst_ip_bytes | >=         | 40      |     0.703  | This is the first policy for this feature. Detects connections with meaningful destination IP bytes; attacks typically have low destination IP bytes in the 0-40 range.                                   |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| src_pkts     | !=         | 2       |     0.6169 | This is the first policy for this feature. Identifies connections with non-standard source packet counts; normal DNS queries typically have exactly 2 source packets.                                     |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| duration     | <          | 0.1     |     0.5733 | Threshold of 0.1 improves F1-score by 0.0257 compared to 0.01, capturing a broader range of brief attack connection attempts while maintaining effective discrimination.                                  |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| conn_state   | !=         | SHR     |     0.5385 | Connection state not equal to 'SHR' provides baseline discrimination between attack and normal entries.                                                                                                   |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| dst_bytes    | ==         | 0       |     0.4581 | This is the first policy for this feature. Zero destination bytes shows the weakest discriminative power among generated policies but still provides some classification signal.                          |
++--------------+------------+---------+------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+{'attack': {'precision': 0.8871903342627312, 'recall': 0.9324957051908243, 'f1-score': 0.9092790277549679, 'support': 29687.0}, 'normal': {'precision': 0.7092280905397562, 'recall': 0.5813510941960038, 'f1-score': 0.6389542483660131, 'support': 8408.0}, 'accuracy': 0.8549940937130857, 'macro avg': {'precision': 0.7982092124012437, 'recall': 0.756923399693414, 'f1-score': 0.7741166380604905, 'support': 38095.0}, 'weighted avg': {'precision': 0.8479120419613064, 'recall': 0.8549940937130857, 'f1-score': 0.8496152727975632, 'support': 38095.0}}
+[[27683  2004]
+ [ 3520  4888]]
+
+{'attack': {'precision': 0.9069401664591389, 'recall': 0.9323272813015798, 'f1-score': 0.9194585167344905, 'support': 29687.0}, 'normal': {'precision': 0.7348554837006731, 'recall': 0.6622264509990485, 'f1-score': 0.6966531122927745, 'support': 8408.0}, 'accuracy': 0.8727129544559653, 'macro avg': {'precision': 0.8208978250799059, 'recall': 0.7972768661503142, 'f1-score': 0.8080558145136325, 'support': 38095.0}, 'weighted avg': {'precision': 0.8689591187459698, 'recall': 0.8727129544559653, 'f1-score': 0.8702828285721085, 'support': 38095.0}}
+[[27678  2009]
+ [ 2840  5568]]
+
+{'attack': {'precision': 0.9055017663221249, 'recall': 0.9324957051908243, 'f1-score': 0.9188005111269686, 'support': 29687.0}, 'normal': {'precision': 0.7336169081483451, 'recall': 0.6563986679352997, 'f1-score': 0.6928629715648735, 'support': 8408.0}, 'accuracy': 0.8715579472371703, 'macro avg': {'precision': 0.819559337235235, 'recall': 0.794447186563062, 'f1-score': 0.8058317413459211, 'support': 38095.0}, 'weighted avg': {'precision': 0.867564822168689, 'recall': 0.8715579472371703, 'f1-score': 0.8689335251015559, 'support': 38095.0}}
+[[27683  2004]
+ [ 2889  5519]]
+
+{'attack': {'precision': 0.9247200401136554, 'recall': 0.9318220096338464, 'f1-score': 0.9282574410254689, 'support': 29687.0}, 'normal': {'precision': 0.7525672371638141, 'recall': 0.7321598477640342, 'f1-score': 0.7422232939474319, 'support': 8408.0}, 'accuracy': 0.8877542984643654, 'macro avg': {'precision': 0.8386436386387348, 'recall': 0.8319909286989403, 'f1-score': 0.8352403674864504, 'support': 38095.0}, 'weighted avg': {'precision': 0.8867239574990796, 'recall': 0.8877542984643654, 'f1-score': 0.8871975877997929, 'support': 38095.0}}
+[[27663  2024]
+ [ 2252  6156]]
+
