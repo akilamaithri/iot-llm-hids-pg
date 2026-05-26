@@ -217,59 +217,55 @@ cost was \$3.30, confirming that policy synthesis imposes negligible offline
 overhead relative to the downstream deployment gains characterised in
 \S\ref{subsec:edge_deployment}.
 
-Table~\ref{tab:timing} reports median per-row inference latency from a
-matched benchmark in which LLM policy rules, Decision Tree, and Random
-Forest are evaluated on the same held-out test rows under identical
-preprocessing. Policy inference is consistently faster than Random Forest
-across all five datasets (4.5$\times$--80$\times$), as the absence of tree
-traversal removes the dominant latency term. Against Decision Tree the
-advantage is dataset-dependent, as shallow trees on low-dimensional feature
-sets can undercut the overhead of iterating over a list of threshold conditions.
+% Table~\ref{tab:timing} reports median per-row inference latency from a
+% matched benchmark in which LLM policy rules, Decision Tree, and Random
+% Forest are evaluated on the same held-out test rows under identical
+% preprocessing. Policy inference is consistently faster than Random Forest
+% across all five datasets (4.5$\times$--80$\times$), as the absence of tree
+% traversal removes the dominant latency term. Against Decision Tree the
+% advantage is dataset-dependent on macOS ARM, where Apple Silicon's
+% NEON-optimised scikit-learn path reduces shallow-tree overhead to a level
+% comparable with iterating over a short rule list; the Raspberry Pi results
+% in \S\ref{subsec:edge_deployment} show the full advantage on embedded ARM.
 
-\begin{table}[htbp]
-\centering
-\caption{Median per-row inference latency (\textmu s/row) from the matched
-  benchmark (30 repeats, inference-only, 20{,}000 test rows per dataset,
-  ARM/macOS). LLM/RF reports how many times faster the LLM policy is than
-  Random Forest.}
-\label{tab:timing}
-\begin{tabular}{lcccr}
-\toprule
-\textbf{Dataset} &
-  \textbf{DT} &
-  \textbf{RF} &
-  \textbf{LLM} &
-  \textbf{LLM/RF} \\
-& (\textmu s/row) & (\textmu s/row) & (\textmu s/row) & \\
-\midrule
-CIC-IoT2023  & 0.035 & 0.974 & 0.012 & 80$\times$ \\
-WUSTL-IIoT   & 0.043 & 1.14  & 0.037 & 31$\times$ \\
-TON\_IoT     & 0.046 & 2.10  & 0.058 & 36$\times$ \\
-Bot-IoT      & 0.027 & 0.799 & 0.177 & 4.5$\times$ \\
-UNSW-NB15    & 0.060 & 4.70  & 0.066 & 71$\times$ \\
-\bottomrule
-\end{tabular}
-\end{table}
+% \begin{table}[htbp]
+% \centering
+% \caption{Median per-row inference latency (\textmu s/row) from the matched
+%   benchmark (30 repeats, inference-only, 20{,}000 test rows per dataset,
+%   ARM/macOS). LLM/RF reports how many times faster the LLM policy is than
+%   Random Forest.}
+% \label{tab:timing}
+% \begin{tabular}{lcccr}
+% \toprule
+% \textbf{Dataset} &
+%   \textbf{DT} &
+%   \textbf{RF} &
+%   \textbf{LLM} &
+%   \textbf{LLM/RF} \\
+% & (\textmu s/row) & (\textmu s/row) & (\textmu s/row) & \\
+% \midrule
+% CIC-IoT2023  & 0.035 & 0.974 & 0.012 & 80$\times$ \\
+% WUSTL-IIoT   & 0.043 & 1.14  & 0.037 & 31$\times$ \\
+% TON\_IoT     & 0.046 & 2.10  & 0.058 & 36$\times$ \\
+% Bot-IoT      & 0.027 & 0.799 & 0.177 & 4.5$\times$ \\
+% UNSW-NB15    & 0.060 & 4.70  & 0.066 & 71$\times$ \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
 
-\begin{figure*}[t]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=0.8\textwidth]{figures/fig_comparison_summary.pdf}
-  \caption{Binary macro-averaged F1~(a) and per-row inference latency~(b) across all five
-    datasets. LLM values are best-round results from Table~\ref{tab:policy_refinement}.
-    RF and DT are binary baselines averaged over ten runs.
-    Speedup annotations in~(b) report the LLM/RF latency ratio.}
+  \includegraphics[width=\columnwidth]{figures/fig_comparison_summary.pdf}
+  \caption{Binary macro-averaged F1 across all five datasets. LLM values are
+    mean over three seeds $\{42, 123, 456\}$ from Table~\ref{tab:policy_refinement},
+    best vendor per dataset. RF and DT are binary baselines averaged over ten runs.}
   \label{fig:comparison_summary}
-\end{figure*}
+\end{figure}
 
-Fig.~\ref{fig:comparison_summary} places both axes of comparison in a single view.
-Panel~(a) shows that the LLM policy F1 lies within $0.02$ of Random Forest on
-four of the five datasets. The sole substantial gap is UNSW-NB15
-(LLM~$0.70$ vs.\ RF~$0.63$), and on this dataset the LLM policy actually
-exceeds the gradient baselines, reflecting that thresholds chosen from
-representative-sample reasoning can recover discriminative structure that
-single-tree splitting misses.
-Panel~(b) confirms the latency asymmetry on a log scale.
-RF bars stand one to two orders of magnitude above the LLM bars on every dataset, establishing that the speed advantage is structural across all five configurations.
+Fig.~\ref{fig:comparison_summary} summarises the binary F1 comparison.
+The LLM policy lies within $0.02$ of Random Forest on four of the five datasets.
+The sole substantial gap is UNSW-NB15 (LLM~$0.70$ vs.\ RF~$0.90$), which reflects the structural feature-overlap ceiling discussed in \S\ref{subsec:multiclass_results} rather than a method limitation.
+On all other datasets the LLM policy matches gradient classifiers trained on the full feature distribution.
 
 Table~\ref{tab:attack_precision_current} reports attack-class precision,
 recall and F1 for both vendors, again as mean over the three-seed campaign.
