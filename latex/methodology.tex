@@ -1,106 +1,18 @@
-\section{Proposed Framework}
-\label{sec:framework}
+\section{Methodology}
+\label{sec:methodology}
 
 The framework introduced in Section~\ref{sec:architecture} is evaluated along
-five protocols that together characterise its operating envelope. The
-policy-generation protocol (\S\ref{subsec:policy_generation}) describes the
-core rule synthesis loop common to every downstream evaluation. Multi-class
+four protocols that together characterise its operating envelope. Multi-class
 attack-family classification (\S\ref{subsec:multiclass}) measures closed-set
 accuracy. Zero-day detection via Suspicious Multi-Class Confidence
 (\S\ref{subsec:zeroday}) measures graceful degradation on out-of-distribution
 traffic. The anonymization ablation (\S\ref{subsec:anon}) measures the
 privacy-utility tradeoff under feature-name obfuscation. The adversarial
 robustness protocol (\S\ref{subsec:kerckhoffs}) measures evasion cost under a
-Kerckhoffs-style threat model. Two LLM rule generators are used throughout:
-\texttt{claude-haiku-4-5-20251001} (Anthropic) and \texttt{gemini-2.5-flash}
-(Google), enabling a cross-vendor generalisability check on every result.
-Global hyperparameters are fixed at $k_{\text{rules}}=5$, $n_{\text{top}}=5$,
-$n_{\text{seeds}}=3$, $n_{\text{rounds}}=8$ with seeds $\{42, 123, 456\}$.
-
-\subsection{Policy Generation Protocol}
-\label{subsec:policy_generation}
-
-Every reported result derives from a single rule-synthesis loop applied to a
-class-balanced corpus per dataset. The loop runs entirely client-side and
-emits one policy JSON artefact per (dataset, model, seed) tuple; the artefact
-is the unit of reproducibility, and every result in this paper is regenerable
-end-to-end from the saved JSON via a single eval invocation.
-
-\paragraph{Class-balanced corpora.}
-For each dataset, we sample at most $C = \min(N_{\text{normal}},
-N_{\text{attack}}, C_{\max})$ flows per class, where $C_{\max}$ is a
-per-dataset cap chosen to bound LLM context size. Bot-IoT inherits the
-population's $C = 370$ benign-flow ceiling so the corpus matches the paper's
-$740$-sample footprint (Table~\ref{tab:datasets}). UNSW-NB15 uses the
-benchmark's pre-split train/test files; all other datasets use a stratified
-80/20 split with a 20\% validation slice carved off the training set. The
-held-out test set is touched only once at the end of the loop.
-
-\paragraph{Stats package and prompt context.}
-Per-feature normal-versus-attack divergence is ranked by the standardised mean
-difference, and the top $n_{\text{top}}=15$ features form the
-context that the LLM consumes. The human prompt presents (a) the global
-attack-versus-normal mean/std/p10/median/p90 for each top feature, (b) per
-attack class means for the same features when class labels are available
-(this is the cross-class generalisation signal), and (c) value-count
-overviews for low-cardinality categorical columns.
-
-\paragraph{Phenomenon-tagged rule proposals.}
-Each round, the LLM is asked to emit exactly $k_{\text{rules}}=5$ rules via
-a structured \texttt{propose\_rule} tool. Every proposal must carry (i) a
-\texttt{feature}, (ii) an \texttt{operator} from
-$\{<, \leq, >, \geq, ==, \neq\}$ with explicit constraints prohibiting
-equality on continuous floats, (iii) a numeric or categorical \texttt{value},
-(iv) a controlled-vocabulary \texttt{phenomenon\_tag} from
-$\{\textsc{Handshake}, \textsc{Asymmetry}, \textsc{Timing}, \textsc{Header},
-\textsc{Service}, \textsc{State}, \textsc{Volume}, \textsc{Entropy}\}$, and
-(v) a one-sentence \texttt{rationale}. The phenomenon vocabulary is the
-mechanism by which the next round is told which protocol-level concepts the
-current policy already covers, steering the LLM toward uncovered phenomena
-and away from per-feature clones.
-
-\paragraph{Diversity-aware acceptance.}
-After scoring every candidate rule's per-rule F1 on the validation slice, the
-$k$ accepted rules are filled greedily by a composite score
-\[
-  S(r \mid A) = \alpha \cdot \mathrm{F1}_{\text{val}}(r)
-  + (1 - \alpha) \cdot D(r \mid A),
-\]
-where $A$ is the already-accepted set and the diversity term decomposes as
-\[
-  D(r \mid A) = w_t \cdot \mathrm{tag}(r,A)
-  + w_d \cdot \mathrm{dis}(r,A)
-  + w_f \cdot \mathrm{feat}(r,A)
-  + w_\theta \cdot \mathrm{thr}(r,A) .
-\]
-\textit{tag} is one minus the fraction of $A$ already carrying $r$'s
-phenomenon tag; \textit{feat} indicates feature novelty; \textit{thr}
-measures threshold separation when the feature is re-used; and \textit{dis}
-is an imbalance-aware decision disagreement,
-$1 - (J_{\text{normal}} + J_{\text{attack}})/2$, with $J_{\text{class}}$ the
-Jaccard similarity of fire-sets computed \emph{within} each class. The
-per-class decomposition prevents the metric from collapsing to triviality on
-severely imbalanced datasets where any two attack-predicting rules agree on
-nearly all rows. Default weights are $\alpha = 0.6$ and
-$(w_t, w_d, w_f, w_\theta) = (0.35, 0.30, 0.20, 0.15)$.
-
-\paragraph{Weighted voting with calibrated threshold.}
-At inference time the policy applies each rule independently to a flow and
-combines the binary outputs through a weighted vote
-$s(\mathbf{x}) = \sum_i w_i \cdot \mathbb{1}[r_i(\mathbf{x})]$, classifying
-$\mathbf{x}$ as attack iff $s(\mathbf{x}) \geq \tau$. Per-rule weights are
-the per-rule attack-class precision on the validation slice; $\tau$ is
-auto-calibrated on the same slice to maximise the selected metric
-(macro-averaged F1 by default; alternatives include attack-class F1 and
-attack precision at recall $\geq 0.9$). Both $\{w_i\}$ and $\tau$ are
-serialised inside the policy JSON, so the canonical evaluator reproduces any
-metric exactly without re-running the LLM.
-
-\paragraph{Round selection and early stopping.}
-The loop runs for up to $n_{\text{rounds}} = 8$ rounds and early-stops when
-the validation selected-metric does not improve for two consecutive rounds.
-The round selected for reporting is the one with the highest
-validation-slice score; the test split is never observed during selection.
+Kerckhoffs-style threat model. All experiments use
+\texttt{claude-haiku-4-5-20251001} as the rule generator and fix the global
+hyperparameters $k_{\text{rules}}=5$, $n_{\text{top}}=5$, $n_{\text{seeds}}=3$,
+and $n_{\text{rounds}}=5$ with seeds $\{42, 123, 456\}$.
 
 \subsection{Multi-Class Classification Protocol}
 \label{subsec:multiclass}
@@ -109,7 +21,7 @@ Multi-class classification is realised through three coupled components. Each
 dataset is labelled with its full taxonomy of attack families. Labels are
 stored alongside feature vectors in the Chroma vector store so that retrieved
 neighbours carry class provenance. The classification prompt lists the
-complete set of $K$ known attack classes and instructs the rule generator to
+complete set of $K$ known attack classes and instructs Claude Haiku 4.5 to
 assign one of these labels. Majority voting across the top-$k$ retrieved
 neighbours' labels supplies a soft prior to the model as in-context evidence.
 Following classification, the rule-generation module synthesises one
@@ -173,22 +85,10 @@ the selected $k_{\text{rules}}=5$ features,
 \subsection{Adversarial Robustness Protocol}
 \label{subsec:kerckhoffs}
 
-The robustness protocol assumes the Kerckhoffs principle. The attacker has
-full knowledge of the generated rule set and applies the minimum feature
-perturbation needed to evade detection. The perturbation budget $\varepsilon$
-is expressed as a fraction of each feature's interquartile range, and the
-adversary perturbs withheld-class flows toward the nearest known-class
-centroid. The Exploitability Sweep Rate measures the fraction of
-originally-flagged flows that evade detection at budget $\varepsilon$,
+The robustness protocol assumes the Kerckhoffs principle. The attacker has full knowledge of the generated rule set and applies the minimum feature perturbation needed to evade detection. The perturbation budget $\varepsilon$
+is expressed as a fraction of each feature's interquartile range, and the adversary perturbs withheld-class flows toward the nearest known-class centroid. The Exploitability Sweep Rate measures the fraction of originally-flagged flows that evade detection at budget $\varepsilon$,
 \[
   \mathrm{ESR}(\varepsilon) = \frac{\text{flows that evade at budget } \varepsilon}
                                    {\text{flows flagged at } \varepsilon = 0} .
 \]
-The summary metric is the critical budget $\varepsilon_{0.5}$ at which
-$\mathrm{ESR}=0.5$, which quantifies the adversarial hardness of each
-detector. Five conditions are compared. \texttt{LLM\_orig} uses semantic
-feature names. \texttt{LLM\_anon} uses opaque identifiers. \texttt{DT\_d3}
-and \texttt{DT\_d5} are Decision Trees at depths three and five.
-\texttt{RF\_d5} is a depth-five Random Forest. Each condition is run for
-three seeds, and the mean and standard deviation of $\varepsilon_{0.5}$ are
-reported in Table~\ref{tab:kerckhoffs}.
+The summary metric is the critical budget $\varepsilon_{0.5}$ at which $\mathrm{ESR}=0.5$, which quantifies the adversarial hardness of each detector. Five conditions are compared. \texttt{LLM\_orig} uses semantic feature names. \texttt{LLM\_anon} uses opaque identifiers. \texttt{DT\_d3} and \texttt{DT\_d5} are Decision Trees at depths three and five. \texttt{RF\_d5} is a depth-five Random Forest. Each condition is run for three seeds, and the mean and standard deviation of $\varepsilon_{0.5}$ are reported in Table~\ref{tab:kerckhoffs}.

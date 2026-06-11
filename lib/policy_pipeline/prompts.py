@@ -184,3 +184,40 @@ def build_human_message(
         f"{framing}\n\n"
         f"Emit exactly {k} tool calls to `propose_rule`."
     )
+
+
+def build_human_message_hybrid(
+    stats_pkg: dict,
+    history: list[RoundLog],
+    k: int,
+    normal_examples: list[dict],
+    attack_examples: list[dict],
+) -> str:
+    """Build human message with stats AND concrete flow examples.
+
+    Args:
+        stats_pkg: statistical aggregates (mean/std/percentiles)
+        history: prior rounds' accepted rules and metrics
+        k: number of rules to propose
+        normal_examples: list of example normal flows as dicts
+        attack_examples: list of example attack flows as dicts
+
+    Returns:
+        Formatted prompt string with examples + stats.
+    """
+
+    # Format examples as compact JSON
+    normal_examples_json = json.dumps(normal_examples[:5], indent=2)[:800]
+    attack_examples_json = json.dumps(attack_examples[:5], indent=2)[:800]
+
+    examples_section = (
+        f"CONCRETE EXAMPLES FROM TRAINING DATA:\n"
+        f"(Top-5 normal + attack flows by centroid similarity; showing first 5 features per flow)\n\n"
+        f"Normal Flow Examples:\n{normal_examples_json}\n\n"
+        f"Attack Flow Examples:\n{attack_examples_json}\n\n"
+    )
+
+    # Get base message (includes stats, history, framing)
+    base_message = build_human_message(stats_pkg, history, k)
+
+    return examples_section + base_message
