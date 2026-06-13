@@ -4,12 +4,12 @@
 The contribution of this paper sits at the intersection of four research
 threads. Gradient-trained IoT intrusion detection establishes the
 closed-set accuracy ceiling. Large language models applied to network
-security expose the inference-cost gap that motivates an
-offline-only architecture. Edge deployment of foundation models supplies
-the SMCC vocabulary that frames our memory-computation split. Trustworthy
-detection along the zero-day, adversarial, and privacy axes defines the
-operating envelope the paper measures. We review each thread in turn and
-close by naming the gap that no prior work jointly fills.
+security expose the inference-cost gap that motivates an offline-only
+architecture. Large-model-driven computing optimization for AIoT supplies
+the deployment vocabulary that frames our offline-online split.
+Trustworthy detection along the zero-day, adversarial, and privacy axes
+defines the operating envelope the paper measures. We review each thread
+in turn and close by naming the gap that no prior work jointly fills.
 
 \subsection{Deep Learning and Tree-Based IDS for IoT}
 \label{subsec:rw_dl_ids}
@@ -49,7 +49,10 @@ traffic~\cite{alhammouri2025hybridllm,sensors2026hybrid_llm_iiot}. Agentic
 designs such as IDS-Agent reason over tool outputs at query
 time~\cite{idsagent2024}. Lightweight LLMs for on-device attack
 detection compress an LLM small enough to run on a single
-gateway~\cite{comcomap2025lightweight}, and broader evaluations of LLMs
+gateway~\cite{comcomap2025lightweight}, and recent gateway-resident
+designs pair a lightweight classifier with an LLM that reasons over
+flagged flows to emit interpretable alerts at the edge in real
+time~\cite{jamshidi2025thinkfast}. Broader evaluations of LLMs
 on IoT IDS benchmarks confirm that fine-tuned models match Random Forest
 within a few F1
 points~\cite{aboulela2025evaluating,iot2025llm_ecosystem_survey}.
@@ -96,34 +99,40 @@ as an implicit byproduct of generation.
     Hybrid LLM-NIDS~\cite{alhammouri2025hybridllm}          & Per-query             & Frozen LLM + classifier      & No        & Yes         \\
     Sensors hybrid IIoT~\cite{sensors2026hybrid_llm_iiot} & Per-query         & Frozen LLM encoder + MLP     & No        & No          \\
     IDS-Agent~\cite{idsagent2024}                     & Per-query (agentic)   & LLM agent + tools            & No        & Yes         \\
+    Think Fast~\cite{jamshidi2025thinkfast}           & Per-query (gateway)   & Edge classifier + LLM        & Partial   & No          \\
     RLFE-IDS~\cite{li2025rlfeids}                       & Per-query             & Fine-tuned LLM + RAG store   & No        & Score-based \\
     AgCyRAG~\cite{agcyrag2025}                        & Per-query             & LLM + KG + vector store      & No        & No          \\
     Lightweight LLM~\cite{comcomap2025lightweight}    & Per-query             & Compressed LLM               & Partial   & No          \\
-    \textbf{Ours}                                     & \textbf{Offline only} & \textbf{JSON threshold rules} & \textbf{Yes} & \textbf{Score-based (SMCC)} \\
+    \textbf{Ours}                                     & \textbf{Offline only} & \textbf{JSON threshold rules} & \textbf{Yes} & \textbf{Retrieval-based} \\
     \bottomrule
   \end{tabular}
 \end{table*}
 
-\subsection{Edge Deployment of Foundation Models and the SMCC Paradigm}
-\label{subsec:rw_smcc}
+\subsection{Large-Model-Driven Computing Optimization for AIoT}
+\label{subsec:rw_compute_opt}
 
-Foundation models cannot run at line rate on an IoT gateway under any
-known compression budget. Surveys of integrated sensing, communication,
-and computation formalise this constraint and propose resource sharing
-across the three functionalities as the path to deployable edge
-intelligence~\cite{iscc2024survey,wen2023otaiscc,saadat2025iscc6g}.
-Edge large AI model work pushes the same point in a foundation-model
-register and identifies the offline-online split as the dominant lever
-for practical deployment~\cite{wang2025edgelam,frontiers2025edgellm}.
-Edge AI surveys treat model compression, pruning, and distillation as
-necessary but insufficient~\cite{deploying2025edgeai}. The Integrated
-Sensing, Memory, Communication, and Computation extension that frames
-this special issue adds explicit memory as a first-class stage and
-gives compressed offline reasoning a place in the architecture. Our
-design instantiates this split. The retrieval index and the LLM act
-together as the memory stage that is touched only at training time. The
-deployed rule evaluator carries no model weights and runs as the
-computation stage at line rate.
+Deploying a large model in the Artificial Intelligence of Things forces a
+choice about where the heavy computation runs. On-device inference is the
+default assumption in most AIoT-LLM work, including autonomous LLM agents
+that drive smart-home control loops~\cite{rivkin2025aiotsmarthome}. That
+assumption collides with the power and memory budget of an IoT gateway.
+Compression, quantization, pruning, and distillation shrink the model but
+do not remove the per-query inference cost, and edge AI surveys treat
+these techniques as necessary but
+insufficient~\cite{deploying2025edgeai}. Task offloading moves the cost
+rather than removing it. Collaborative edge-cloud schemes such as
+EdgeShard partition an LLM across devices and a server to cut inference
+latency~\cite{zhang2025edgeshard}, and edge large AI model work
+identifies the offline-online split as the dominant lever for practical
+deployment~\cite{wang2025edgelam,frontiers2025edgellm}. The shared limit
+is that every one of these designs still evaluates a large model at the
+moment a flow arrives. Our design takes the offline-online split to its
+endpoint. The retrieval index and the LLM run only at policy-synthesis
+time on the workstation or cloud tier. The deployed rule evaluator carries
+no model weights and runs at line rate on the gateway. The large-model
+computation becomes a one-time optimization step rather than a recurring
+per-query load, which is the form of computing optimization this special
+issue targets.
 
 \subsection{Trustworthy IDS Across Zero-Day, Adversarial, and Privacy Axes}
 \label{subsec:rw_trust}
@@ -182,6 +191,7 @@ an inference-time LLM cost the gateway cannot absorb. The closest
 zero-day designs assume a discriminative confidence we deliberately do
 not train. The closest robustness studies evaluate trained classifiers
 rather than LLM-emitted rules. The closest privacy studies target trace
-release rather than prompt leakage. The SMCC memory-computation split
-is the architectural lens that lets a single design address all four
-axes at once, and the remainder of this paper realises that design.
+release rather than prompt leakage. The offline-online split that turns
+large-model reasoning into a one-time computing-optimization step is the
+architectural lens that lets a single design address all four axes at
+once, and the remainder of this paper realises that design.
