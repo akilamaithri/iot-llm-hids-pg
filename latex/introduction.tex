@@ -1,100 +1,46 @@
 \section{Introduction}
 \label{sec:intro}
 
-The Internet of Things now connects tens of billions of constrained
-devices, and every gateway that bridges those devices to the wider
-network is a high-value attack surface. Flow-level intrusion detection
-at the gateway is the standard line of defence, and recent benchmarks
-report near-perfect closed-set accuracy for gradient-trained
-classifiers on IoT traffic. The deployment story is less settled.
-A modern IoT gateway runs on a few hundred megabytes of memory and a
-single-digit-watt power envelope, and the same gradient-trained
-classifier that scores well in the benchmark must coexist with the
-gateway's primary routing workload at line rate. Large language models
-have transformed reasoning over heterogeneous tabular inputs and would
-in principle generalise across attack families without per-dataset
-retraining, yet a foundation-model inference per packet is
-incompatible with any realistic IoT edge budget.
+% Motivation: AIoT, edge LLMs, and the widened threat surface
+The Artificial Intelligence of Things (AIoT) embeds learning directly into connected devices. It has turned passive sensor networks into systems that perceive, decide, and act with no human in the loop~\cite{chang2021aiot}. The same trend pulls foundation models and large language models (LLMs) toward the network edge, where their contextual reasoning promises richer perception and control~\cite{wang2025edgelam,frontiers2025edgellm}. Wider intelligence widens the attack surface. AIoT inherits the classical network threats of the IoT, including botnets and denial-of-service floods that recruit poorly defended devices at scale~\cite{antonakakis2017mirai}. It also inherits AI-specific threats such as adversarial perturbation and model poisoning that target the learning components themselves~\cite{rosenberg2021advml}. An intrusion detection system (IDS) for AIoT must hold accuracy as traffic shifts. At the same time, the solution must operate within the power, memory, and latency constraints of edge and fog deployment tiers.
 
-The Integrated Sensing, Memory, Communication, and Computation (SMCC)
-paradigm provides the architectural lens that resolves this tension.
-SMCC separates the offline ingestion and compression of training
-experience, the \emph{memory} stage, from the online line-rate
-response, the \emph{computation} stage. A detector designed under
-SMCC need not run the same machinery at training time and at
-inference time. Expensive reasoning happens once, offline, against a
-compact compressed view of the training distribution. The deployed
-component carries no model weights and issues no foundation-model
-call per flow. This split is what makes large-AI deployment on
-resource-constrained IoT gateways tractable rather than aspirational.
+% Why conventional IDS cannot resolve the three-way tension
+Conventional signature- and anomaly-based detectors track new threats only through periodic retraining. That retraining is costly in energy and memory, and it scales poorly across the heterogeneous device populations of a real
+deployment. Machine-learning and deep-learning detectors raise accuracy on every benchmark~\cite{ferrag2020dlids}. However, the most accurate models are the hardest to host on constrained hardware. Their opacity means a security practitioner cannot easily audit or modify a gradient-trained decision boundary, eroding the trust that operational deployment requires.~\cite{moustafa2023explainable}. Accuracy, deployability, and interpretability therefore pull against one another in every conventional design. Fig.~\ref{fig:problem} casts this as a pick-two constraint that no existing detector escapes.
 
-We instantiate this split for IoT intrusion detection.
-A retrieval-augmented language model acts as the memory stage.
-\texttt{claude-haiku-4-5-20251001} (Claude Haiku 4.5) reads
-class-representative neighbours retrieved from a Chroma vector store
-of training flows and synthesises interpretable threshold rules once,
-offline, as a JSON policy. A stateless rule evaluator acts as the
-computation stage. It applies the policy to live flows as vectorised
-threshold comparisons that map directly onto access-control list
-firewall entries. No language-model call is required at inference
-time, and the runtime dependency is a few dozen comparisons per flow.
-The full offline policy-generation cost is approximately \$0.05 per
-dataset at current Claude Haiku 4.5 API rates, which is the price of
-a single training run rather than a recurring inference budget.
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/fig_problem.pdf}
+    \caption{The three-way tension in AIoT intrusion detection: accuracy, deployability, and interpretability.}
+    \label{fig:problem}
+\end{figure}
 
-The architecture is viable because retrieval-augmented prompts can
-recover the discriminative threshold structure of a benchmark IoT
-dataset from a small representative sample without gradient training.
-On datasets with well-separated traffic signatures the resulting
-policy matches Random Forest within $0.06$ macro-F1 while running
-4.5$\times$ to 80$\times$ faster per flow. On datasets with high
-intra-class overlap the policy degrades gracefully, and the same
-retrieval signal supplies a confidence score that flags
-out-of-distribution traffic. We name this confidence score
-Suspicious Multi-Class Confidence (SMCC, by construction aligned with
-the special-issue acronym), and use it to extend the closed-set
-detector to zero-day flows without retraining.
+% The reframing: large model as offline computing-optimization step
+We resolve this tension by moving the large model out of the detection loop. It instead runs on the workstation or cloud tier, reasons over a representative sample of traffic and compiles a compact detection policy. The gateway then executes that policy in pure Python with no model weights and no inference-time accelerator. The heavy reasoning becomes a computing-optimization step at the cloud tier, and the edge runs a stateless evaluator. The split removes the communication, energy, and latency overhead that on-device large-model inference would impose. It preserves the interpretability that opaque classifiers cannot offer, because the compiled policy is a short list of human-readable threshold rules.
 
-The paper makes four contributions.
+% How the design overcomes the known weaknesses of LLMs
+A large model cannot be trusted to write detection rules from a bare prompt. It lacks intrinsic IoT-security expertise, hallucinates~\cite{huang2025hallucination}, and it reasons unreliably over long lists of numeric traffic~\cite{huang2024quantreasoning}. Our design grounds the model in evidence retrieved from a class-balanced corpus. For rule synthesis the model never sees raw flows. It receives a divergence-ranked statistical profile of the corpus, which bounds the token budget and anchors every threshold in measured data. A separate vector store of embedded labelled flows supplies nearest-neighbour class priors for multi-class labelling and the confidence
+signal that drives zero-day detection. An agentic refinement loop then improves the policy over several rounds. A controlled-vocabulary prompt and a diversity-aware acceptance rule steer the model toward complementary detection phenomena and away from redundant rules. A weighted vote with a validation-calibrated threshold combines the accepted rules at inference time. The framework produces a high-precision policy at negligible offline cost, and its quality depends on the prompt structure rather than on any single model vendor.
+
+% Objective and contributions
+Hence, this work delivers a framework that compiles interpretable, semantic-aware intrusion-detection policies for AIoT through offline large-model reasoning. It optimizes jointly for detection accuracy, edge resource use, and operator trust. This paper makes the following four contributions.
 
 \begin{itemize}
-  \item An SMCC-aligned architecture for IoT intrusion detection that
-    confines all foundation-model computation to an offline memory
-    stage and deploys the result as a stateless threshold-rule
-    evaluator. The runtime evaluator runs at line rate on commodity
-    gateway hardware and requires no model weights.
+    \item \textbf{An offline large-model-driven policy-compilation paradigm
+    for AIoT-IDS.} A retrieval-grounded agentic pipeline reasons over corpus evidence and emits threshold-based policies as natural-language-editable rules. This decouples the cost of large-model reasoning from the edge runtime. It also lets a security practitioner read and revise the deployed policy directly.
 
-  \item A multi-class evaluation across five IoT benchmarks
-    (CIC-IoT2023, WUSTL-IIoT, TON\_IoT, Bot-IoT, UNSW-NB15) that
-    characterises the operating envelope of LLM-generated threshold
-    rules. The LLM matches Random Forest within $0.06$ macro-F1 on
-    four of five datasets and exposes a structural expressiveness
-    ceiling on the fifth.
+    \item \textbf{A system-level benchmark for edge-deployed policy synthesis across five IoT datasets.} The framework matches or approaches gradient-trained classifier performance across datasets, and we characterize the structural expressiveness limit where it falls short. We measure cross-vendor portability, synthesis cost, and compiled policy inference latency on Raspberry Pi hardware. Together these provide a reproducible performance profile for large-model-driven IDS at the edge.
 
-  \item A retrieval-confidence protocol that extends the closed-set
-    detector to zero-day attack families. The Suspicious Multi-Class
-    Confidence score isolates the withheld attack class with
-    $\text{ZDR} \geq 0.999$ on two of five withholding scenarios
-    without any retraining of the policy.
+    \item \textbf{A trustworthiness study under privacy and adversarial pressure.} We evaluate synthesized policies under feature-name anonymization to assess reliance on semantic priors, and under a Kerckhoffs threat model to assess adversarial hardness relative to tree-based baselines.
 
-  \item A feature-name anonymization ablation and a Kerckhoffs-style
-    adversarial robustness study that together address the
-    trustworthiness axis of SMCC. Anonymizing feature names does not
-    degrade and in three of five cases improves detection F1, and
-    LLM-generated rules distribute evasion cost across multiple
-    features rather than concentrating it in a single bottleneck.
+    \item \textbf{A retraining-free zero-day extension.} We add a retrieval-confidence protocol that extends the closed-set policy to unseen attack families without retraining, achieving strong detection rates while maintaining low false-positive rates. This lowers the operational burden of alarm management.
 \end{itemize}
 
-The remainder of the paper is organised as follows.
-Section~\ref{sec:related} surveys the closest prior work on
-LLM-assisted intrusion detection, retrieval-augmented generation, and
-edge deployment of foundation models.
-Section~\ref{sec:prelim} fixes notation and frames the SMCC
-memory-computation split that the rest of the paper exploits.
-Section~\ref{sec:architecture} describes the offline policy-synthesis
-pipeline and the online rule evaluator that together realise that
-split. Section~\ref{sec:framework} formalises the four evaluation
-protocols. Section~\ref{sec:resultsAndDisc} reports results across
-five IoT benchmarks and analyses the conditions under which the
-approach is deployable. The appendix contains per-class breakdowns
-and additional ablation tables.
+% Paper organization
+The remainder of the paper is organized as follows.
+Sec.~\ref{sec:related} reviews related work. Sec.~\ref{sec:preliminaries}
+sets out the preliminaries and formalizes the system architecture and threat
+model. Sec.~\ref{sec:methodology} introduces the proposed framework.
+Sec.~\ref{sec:resultsAndDisc} reports and discusses the results.
+Sec.~\ref{sec:conclusion} concludes. The appendix contains per-class
+breakdowns and additional ablation tables.

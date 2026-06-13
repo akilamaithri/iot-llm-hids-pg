@@ -1,36 +1,121 @@
 \section{Preliminaries}
-\label{sec:prelim}
+\label{sec:preliminaries}
+
+This section fixes the notation and recalls the four established primitives
+the framework composes. Each is stated in the canonical form of its source so
+that Sections~\ref{sec:architecture}~and~\ref{sec:framework} can build on it
+directly.
+
+\subsection{Flow-Level Detection}
+\label{subsec:flowdetection}
 
 We address flow-level intrusion detection on IoT gateways. A flow
 $\mathbf{x} \in \mathbb{R}^{d}$ is a fixed-length vector of $d$ numeric
-descriptors derived from a network connection. A detector $f$ maps
-$\mathbf{x}$ to one of $K$ known attack-family labels in
-$\mathcal{K} = \{c_1, \dots, c_K\}$. The closed-set assumption is standard
-but brittle, and Section~\ref{subsec:zeroday} formalises a retrieval-confidence
-protocol that relaxes it for zero-day traffic.
+descriptors derived from a network connection. A detector is a map
+\begin{equation}
+  f : \mathbb{R}^{d} \to \mathcal{K},
+  \qquad
+  \mathcal{K} = \{c_1, \dots, c_K\},
+  \label{eq:detector}
+\end{equation}
+where $\mathbb{R}^{d}$ is the space of flow vectors and $\mathcal{K}$ the
+fixed set of $K$ known attack-family labels. The closed-set assumption that
+every flow belongs to one of these $K$ families is standard but brittle, and
+Section~\ref{subsec:zeroday} relaxes it for zero-day traffic. Detection
+quality is reported as the macro-averaged $F_1$, the unweighted mean of the
+per-class scores~\cite{sokolova2009metrics}
+\begin{equation}
+  \text{macro-}F_1 = \frac{1}{K} \sum_{c=1}^{K}
+    \frac{2 \, P_c \, R_c}{P_c + R_c},
+  \label{eq:macrof1}
+\end{equation}
+where $P_c$ and $R_c$ are the precision and recall of class $c$. The
+unweighted mean weights every attack family equally regardless of its
+prevalence, so a detector cannot hide poor minority-class performance behind
+a dominant class.
 
-Retrieval-augmented generation (RAG) conditions a language model on content
-retrieved from an external store rather than on parametric memory alone. The
-canonical pattern embeds a corpus into a dense vector index and retrieves
-the top-$k$ neighbours of a query by cosine similarity as in-context
-evidence. We specialise this pattern to policy synthesis. The corpus is the
-training split of an IoT dataset, each flow is embedded under its class
-label, and the model emits a structured policy rather than free text. In
-the SMCC view of this special issue, the vector store and the language
-model together act as the \emph{memory} stage. They compress the training
-distribution into a retrieval index and a prompt context that are touched
-once at offline policy-generation time.
+\subsection{Retrieval-Augmented Generation}
+\label{subsec:ragsynthesis}
 
-A threshold rule is a tuple
-\texttt{(feature, op, value, target\_class)} that fires when the named
-feature of $\mathbf{x}$ satisfies the comparison. A policy is a set of such
-rules, and the detector evaluates every rule against $\mathbf{x}$ in a
-vectorised comparison and assigns the majority-vote class. Threshold rules
-are the same primitive that IoT gateways already execute as access-control
-list (ACL) firewall entries, so a generated policy deploys without new
-runtime infrastructure. In the SMCC view, the rule evaluator is the
-\emph{computation} stage. It runs at line rate, carries no model weights,
-and issues no language-model call per flow.
-Section~\ref{sec:architecture} composes these two primitives into the
-end-to-end system, and Section~\ref{sec:framework} defines the four
-protocols that exercise it.
+Retrieval-augmented generation (RAG) conditions a generator on documents
+pulled from an external store rather than on parametric memory
+alone~\cite{lewis2020rag}. A retriever scores each document $z$ in a corpus
+against a query $x$, the top-$k$ documents are taken as a latent variable,
+and the output $y$ is marginalised over them,
+\begin{equation}
+  p(y \mid x) \approx
+    \sum_{z \in \text{top-}k(p(\cdot \mid x))}
+      p_\eta(z \mid x) \; p_\theta(y \mid x, z),
+  \label{eq:rag}
+\end{equation}
+where $p_\eta(z \mid x)$ is the retriever's relevance score and
+$p_\theta(y \mid x, z)$ is the generator conditioned on the retrieved
+evidence~\cite{lewis2020rag}. The retriever scores documents by the cosine
+similarity of dense embeddings~\cite{reimers2019sbert,song2020mpnet}. For an
+embedding map $\phi$ and two flows $\mathbf{u},\mathbf{v}$,
+\begin{equation}
+  \mathrm{sim}(\mathbf{u}, \mathbf{v})
+  = \frac{\phi(\mathbf{u}) \cdot \phi(\mathbf{v})}
+         {\lVert \phi(\mathbf{u}) \rVert \, \lVert \phi(\mathbf{v}) \rVert}
+  \in [-1, 1],
+  \label{eq:cosine}
+\end{equation}
+which is $1$ when the embeddings point the same way and $0$ when they are
+orthogonal. We specialise this pattern so the corpus is the training split
+of an IoT dataset and the generator emits a structured policy rather than
+free text. The retriever and generator run only at the cloud or workstation
+tier, touched once at offline policy-generation time, and no model weights or
+embeddings are shipped to the edge.
+
+\subsection{Feature Divergence and Importance}
+\label{subsec:featurestats}
+
+The generator is grounded in features that separate normal from attack
+traffic. Two established statistics rank them. The standardised mean
+difference, Cohen's $d$, measures how far apart two class means sit in
+pooled-standard-deviation units~\cite{cohen1988power},
+\begin{equation}
+  d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}},
+  \qquad
+  s_{\text{pooled}} = \sqrt{\frac{s_1^2 + s_2^2}{2}},
+  \label{eq:cohend}
+\end{equation}
+where $\bar{x}_i$ and $s_i$ are the mean and standard deviation of the
+feature within class $i$. A large $|d|$ marks a feature whose value alone
+separates the classes. Permutation importance complements this by measuring
+the error increase when a feature is randomly shuffled~\cite{breiman2001randomforests},
+\begin{equation}
+  \mathrm{VI}_j = \mathcal{L}\bigl(y, f(\mathbf{x}^{\pi_j})\bigr)
+                - \mathcal{L}\bigl(y, f(\mathbf{x})\bigr),
+  \label{eq:permimp}
+\end{equation}
+where $\mathbf{x}^{\pi_j}$ permutes feature $j$ and $\mathcal{L}$ is the loss.
+A feature with large $\mathrm{VI}_j$ is one the detector relies on. Cohen's
+$d$ ranks the prompt context and $\mathrm{VI}_j$ ranks the features exposed
+to the rule generator.
+
+\subsection{Threshold-Rule Policies}
+\label{subsec:thresholdpolicy}
+
+The detector emitted by the generator is a policy of threshold rules. A
+threshold rule is a tuple $r = (\,\text{feature},\, \text{op},\,
+\text{value},\, c\,)$ that fires when the named feature of $\mathbf{x}$
+satisfies the comparison and then votes for its target class $c$. For
+example, a rule may fire when packet count exceeds a value and vote
+\texttt{DDoS}. A policy is a set $\pi = \{r_1, \dots, r_n\}$ of such rules,
+evaluated against $\mathbf{x}$ in a single vectorised comparison. The exact
+weighted-vote aggregation that turns the fired rules into a label is the
+paper's own construction and is defined in
+Section~\ref{subsec:policy_generation}. Threshold rules are the same
+primitive that IoT gateways already execute as access-control list (ACL)
+firewall entries, so a generated policy deploys without new runtime
+infrastructure. The compiled policy is the only artifact that reaches the
+gateway. It runs at line rate within the power and memory budget of an edge
+device, carries no model weights, and issues no language-model call per flow.
+This offline-reasoning, edge-execution split is the computing-optimization
+step that lets a large model harden an AIoT deployment without on-device
+inference cost.
+
+Section~\ref{sec:architecture} composes these primitives into the end-to-end
+system, and Section~\ref{sec:framework} defines the four protocols that
+exercise it.

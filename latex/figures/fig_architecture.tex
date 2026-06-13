@@ -1,105 +1,143 @@
-% Standalone TikZ source for Fig.~\ref{fig:architecture} in
-% system_architecture.tex. Compile with:
-%   pdflatex fig_architecture.tex
-% to produce fig_architecture.pdf, which the main paper includes via
-%   \includegraphics[width=\columnwidth]{figures/fig_architecture.pdf}
+% Standalone TikZ source for the end-to-end architecture figure.
+% Avoids standalone.cls (not installed). Uses article + geometry + shipout
+% to produce a tightly cropped PDF.
 %
-% Alternatively, paste the tikzpicture environment directly into
-% system_architecture.tex inside the figure environment.
+% Compile with:
+%   pdflatex fig_architecture.tex   (or ./build.sh fig_architecture.tex)
+% to produce fig_architecture.pdf, included via:
+%   \includegraphics[width=0.88\textwidth]{figures/fig_architecture.pdf}
 
-\documentclass[tikz,border=4pt]{standalone}
+\documentclass{article}
+\usepackage[paperwidth=205mm,paperheight=125mm,margin=3mm]{geometry}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds, calc}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage{amsmath}
+\usepackage{amssymb}   % \mathbb
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\topskip}{0pt}
+\setlength{\parskip}{0pt}
 
 \begin{document}
+\noindent
 \begin{tikzpicture}[
-    font=\footnotesize,
-    >={Stealth[length=4pt]},
-    node distance=4mm and 6mm,
-    box/.style={
-        draw, rounded corners=2pt, align=center,
-        minimum width=34mm, minimum height=7mm,
-        inner sep=2pt, fill=white
-    },
-    data/.style={
-        box, fill=blue!6, draw=blue!50!black
-    },
-    proc/.style={
-        box, fill=gray!8, draw=black!70
-    },
-    llm/.style={
-        box, fill=orange!12, draw=orange!70!black
-    },
-    artefact/.style={
-        box, fill=green!10, draw=green!50!black, font=\footnotesize\ttfamily
-    },
-    phase/.style={
-        rounded corners=4pt, draw=black!30, dashed, inner sep=4mm
-    },
-    arr/.style={->, thick, draw=black!70},
-    flow/.style={->, thick, draw=blue!60!black}
+  >=Stealth,
+  node distance = 5mm,
+  ionode/.style   = {draw, rounded corners=2pt, fill=gray!18,
+                     text width=40mm, align=center,
+                     font=\scriptsize\bfseries,
+                     inner sep=3pt, minimum height=8mm},
+  procnode/.style = {draw, rounded corners=2pt, fill=blue!8,
+                     text width=40mm, align=center,
+                     font=\scriptsize, inner sep=3pt,
+                     minimum height=9mm},
+  storenode/.style= {draw, rounded corners=2pt, fill=cyan!10,
+                     text width=40mm, align=center,
+                     font=\scriptsize, inner sep=3pt,
+                     minimum height=9mm},
+  ctxnode/.style  = {draw, rounded corners=2pt, fill=blue!13,
+                     text width=40mm, align=center,
+                     font=\scriptsize, inner sep=3pt,
+                     minimum height=11mm},
+  llmnode/.style  = {draw, rounded corners=2pt, fill=violet!10,
+                     text width=40mm, align=center,
+                     font=\scriptsize, inner sep=3pt,
+                     minimum height=11mm},
+  refnode/.style  = {draw, rounded corners=2pt, fill=orange!10,
+                     text width=40mm, align=center,
+                     font=\scriptsize, inner sep=3pt,
+                     minimum height=11mm},
+  artnode/.style  = {draw, very thick, rounded corners=3pt,
+                     fill=yellow!22, text width=38mm, align=center,
+                     font=\scriptsize\bfseries,
+                     inner sep=3pt, minimum height=9mm},
+  edgenode/.style = {draw, rounded corners=2pt, fill=teal!8,
+                     text width=40mm, align=center,
+                     font=\scriptsize, inner sep=3pt,
+                     minimum height=9mm},
+  flagnode/.style = {draw, rounded corners=2pt, fill=red!8,
+                     text width=34mm, align=center,
+                     font=\scriptsize, inner sep=3pt,
+                     minimum height=8mm},
+  arr/.style    = {->, semithick},
+  bigarr/.style = {->, very thick},
+  grpbg/.style  = {draw, dashed, semithick, rounded corners=5pt,
+                   inner sep=5mm},
 ]
 
-% =====================================================================
-% LEFT PHASE: Offline Policy Synthesis
-% =====================================================================
-\node[data] (train)               {Training flows};
-\node[proc, below=of train] (feat) {Featuriser \\ + permutation importance};
-\node[proc, below=of feat] (embed) {MPNet embedder};
-\node[data, below=of embed] (chroma) {Chroma vector store \\ (per-class labels)};
-\node[proc, below=of chroma] (retr) {Mean-embedding $k$-NN retrieval};
-\node[llm,  below=of retr] (prompt) {Claude Haiku 4.5 prompt \\ (samples + top features)};
-\node[llm,  below=of prompt] (loop) {Tool-using refinement loop};
-\node[artefact, below=of loop] (rules) {Rule set (JSON ACL tuples)};
+% =============================================
+% OFFLINE COLUMN (left)
+% =============================================
+\node[ionode]    (traindata) {Training Flows};
+\node[procnode,  below=of traindata] (encode)  {Encode flows\\{\tiny\texttt{all-mpnet-base-v2}}};
+\node[storenode, below=of encode]    (chroma)  {Chroma Vector Store\\{\tiny class-labeled dense embeddings}};
+\node[ctxnode,   below=of chroma]    (ctx)     {Prompt Context Assembly\\{\tiny feature divergence~$\cdot$~top-$k$ samples~$\cdot$~summary stats}};
+\node[llmnode,   below=of ctx]       (llm)     {LLM Rule Generator\\{\tiny Claude Haiku 4.5 / Gemini 2.5 Flash}\\{\tiny temperature $= 0$}};
+\node[refnode,   below=of llm]       (refine)  {LangGraph Refinement Loop\\{\tiny diversity-aware acceptance}\\{\tiny per-rule validation F1 scoring}};
+\node[artnode,   below=of refine]    (json)    {JSON Policy Artifact\\{\tiny rules~$+$~weights~$+$~threshold~$\tau$}};
 
-% Embedding -> store (sideways)
-\draw[arr] (train)  -- (feat);
-\draw[arr] (feat)   -- (embed);
-\draw[arr] (embed)  -- (chroma);
-\draw[arr] (chroma) -- (retr);
-\draw[arr] (retr)   -- (prompt);
-\draw[arr] (prompt) -- (loop);
-\draw[arr] (loop)   -- (rules);
+% =============================================
+% ONLINE COLUMN (right)
+% =============================================
+\node[ionode,    right=44mm of traindata] (liveflow) {Live Flow};
+\node[edgenode,  below=of liveflow]       (ruleeval) {Rule Evaluator\\{\tiny vectorized threshold comparison}};
+\node[edgenode,  below=of ruleeval]       (wvote)    {Weighted Vote\\{\tiny $s(\mathbf{x})=\sum_i w_i\cdot\mathbb{1}[r_i(\mathbf{x})]$,~attack iff~$s\!\geq\!\tau$}};
+\node[ionode,    below=of wvote]          (clabel)   {Class Label};
+% SMCC / zero-day branch
+\node[flagnode,  right=7mm of ruleeval]   (smcc)     {Retrieval Confidence\\{\tiny SMCC $=\max_j\,p_j$}};
+\node[flagnode,  below=5mm of smcc]       (zdflag)   {Zero-Day Flag\\{\tiny if SMCC $< \tau$}};
+% annotation
+\node[font=\tiny\itshape, text=gray!55, align=center,
+      below=4mm of clabel] (nollm) {No LLM call at inference time};
 
-% Refinement back-edge
-\draw[arr, dashed, draw=orange!70!black]
-    (loop.east) .. controls +(12mm,0) and +(12mm,0) .. (prompt.east)
-    node[midway, right, font=\scriptsize\itshape, text=orange!70!black] {feedback};
+% =============================================
+% OFFLINE ARROWS
+% =============================================
+\draw[arr] (traindata) -- (encode);
+\draw[arr] (encode)    -- (chroma);
+\draw[arr] (chroma)    -- (ctx)
+    node[midway, right, font=\tiny, xshift=1mm]{top-$k$ neighbors};
+\draw[arr] (ctx)       -- (llm)
+    node[midway, right, font=\tiny, xshift=1mm]{context};
+\draw[arr] (llm)       -- (refine)
+    node[midway, right, font=\tiny, xshift=1mm]{proposed rules};
+\draw[arr] (refine)    -- (json);
+% Refinement loop: left, up, right back to LLM
+\draw[arr, dashed]
+    (refine.west) -- ++(-10mm, 0) |- (llm.west)
+    node[pos=0.4, left, font=\tiny, xshift=-1mm]{revise};
 
-% Phase frame (left)
+% =============================================
+% JSON BRIDGE ARROW
+% =============================================
+\draw[bigarr, orange!65!black]
+    (json.east) -- ++(14mm, 0) |- (ruleeval.west)
+    node[pos=0.25, right, font=\tiny\bfseries,
+         text=orange!65!black]{deploy once};
+
+% =============================================
+% ONLINE ARROWS
+% =============================================
+\draw[arr] (liveflow)      -- (ruleeval);
+\draw[arr] (ruleeval)      -- (wvote);
+\draw[arr] (wvote)         -- (clabel);
+\draw[arr] (ruleeval.east) -- (smcc.west);
+\draw[arr] (smcc)          -- (zdflag);
+
+% =============================================
+% GROUP BACKGROUND BOXES
+% =============================================
 \begin{scope}[on background layer]
-  \node[phase, fit=(train)(feat)(embed)(chroma)(retr)(prompt)(loop)(rules),
-        label={[font=\small\bfseries, anchor=north]north:Offline Policy Synthesis}]
-        (left) {};
+  \node[grpbg, fill=blue!4,
+        fit=(traindata)(encode)(chroma)(ctx)(llm)(refine)(json),
+        label={[font=\small\bfseries, text=blue!55!black]above:%
+               Cloud/Workstation Tier (Offline)}] (offbox) {};
+  \node[grpbg, fill=teal!4,
+        fit=(liveflow)(ruleeval)(wvote)(clabel)(smcc)(zdflag)(nollm),
+        label={[font=\small\bfseries, text=teal!55!black]above:%
+               Edge Gateway Tier (Online)}] (onbox) {};
 \end{scope}
-
-% =====================================================================
-% RIGHT PHASE: Online Detection
-% =====================================================================
-\node[data, right=24mm of train] (live) {Live IoT flow};
-\node[proc, below=of live] (feat2) {Featuriser};
-\node[proc, below=of feat2, minimum height=14mm] (eval)
-     {Rule evaluator \\ (vectorised threshold \\ comparison + majority vote)};
-\node[data, below=of eval] (verdict) {\texttt{normal} / \texttt{attack} / \texttt{anomaly flag}};
-
-\draw[arr] (live)  -- (feat2);
-\draw[arr] (feat2) -- (eval);
-\draw[arr] (eval)  -- (verdict);
-
-% Phase frame (right)
-\begin{scope}[on background layer]
-  \node[phase, fit=(live)(feat2)(eval)(verdict),
-        label={[font=\small\bfseries, anchor=north]north:Online Detection}]
-        (right) {};
-\end{scope}
-
-% =====================================================================
-% Cross-phase artefact handover
-% =====================================================================
-\draw[flow, very thick, draw=green!50!black]
-    (rules.east) .. controls +(20mm,0) and +(-20mm,-10mm) .. (eval.west)
-    node[midway, above, font=\scriptsize\itshape, text=green!50!black,
-         sloped] {deployed policy};
 
 \end{tikzpicture}
 \end{document}

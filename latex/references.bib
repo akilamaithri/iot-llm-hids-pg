@@ -2,11 +2,95 @@
 % references.bib
 % Bibliography for "RAG-assisted LLM policy generation for IoT
 % intrusion detection" submitted to the IEEE Internet of Things Journal
-% Special Issue on Integrated Sensing, Memory, Communication, and
-% Computation (SMCC) for Large-Scale AI Based IoT Systems.
+% Special Issue on Large Model-Driven Intelligent Computing Optimization
+% in the Artificial Intelligence of Things (AIoT).
 %
 % Entries are grouped thematically to mirror the Related Work section.
 % =====================================================================
+
+% ---------------------------------------------------------------------
+% 0. Introduction motivation: AIoT, IoT threat surface, IDS limits
+% ---------------------------------------------------------------------
+
+@article{chang2021aiot,
+  author    = {Chang, Zhuoqing and Liu, Shubo and Xiong, Xingxing and Cai, Zhaohui and Tu, Guoqing},
+  title     = {A Survey of Recent Advances in Edge-Computing-Powered Artificial Intelligence of Things},
+  journal   = {IEEE Internet of Things Journal},
+  volume    = {8},
+  number    = {18},
+  pages     = {13849--13875},
+  year      = {2021},
+  doi       = {10.1109/JIOT.2021.3088875}
+}
+
+@inproceedings{antonakakis2017mirai,
+  author    = {Antonakakis, Manos and April, Tim and Bailey, Michael and Bernhard, Matt and Bursztein, Elie and Cochran, Jaime and Durumeric, Zakir and Halderman, J. Alex and Invernizzi, Luca and Kallitsis, Michalis and Kumar, Deepak and Lever, Chaz and Ma, Zane and Mason, Joshua and Menscher, Damian and Seaman, Chad and Sullivan, Nick and Thomas, Kurt and Zhou, Yi},
+  title     = {Understanding the {Mirai} Botnet},
+  booktitle = {26th USENIX Security Symposium (USENIX Security 17)},
+  pages     = {1093--1110},
+  year      = {2017},
+  publisher = {USENIX Association}
+}
+
+@article{rosenberg2021advml,
+  author    = {Rosenberg, Ishai and Shabtai, Asaf and Elovici, Yuval and Rokach, Lior},
+  title     = {Adversarial Machine Learning Attacks and Defense Methods in the Cyber Security Domain},
+  journal   = {ACM Computing Surveys},
+  volume    = {54},
+  number    = {5},
+  articleno = {108},
+  pages     = {1--36},
+  year      = {2021},
+  publisher = {ACM},
+  doi       = {10.1145/3453158}
+}
+
+@article{ferrag2020dlids,
+  author    = {Ferrag, Mohamed Amine and Maglaras, Leandros and Moschoyiannis, Sotiris and Janicke, Helge},
+  title     = {Deep Learning for Cyber Security Intrusion Detection: Approaches, Datasets, and Comparative Study},
+  journal   = {Journal of Information Security and Applications},
+  volume    = {50},
+  pages     = {102419},
+  year      = {2020},
+  publisher = {Elsevier},
+  doi       = {10.1016/j.jisa.2019.102419}
+}
+
+@article{moustafa2023explainable,
+  author    = {Moustafa, Nour and Koroniotis, Nickolaos and Keshk, Marwa and Zomaya, Albert Y. and Tari, Zahir},
+  title     = {Explainable Intrusion Detection for Cyber Defences in the {Internet of Things}: Opportunities and Solutions},
+  journal   = {IEEE Communications Surveys \& Tutorials},
+  volume    = {25},
+  number    = {3},
+  pages     = {1775--1807},
+  year      = {2023},
+  doi       = {10.1109/COMST.2023.3280465}
+}
+
+% --- Known weaknesses of LLMs (hallucination, numerical reasoning) ---
+
+@article{huang2025hallucination,
+  author    = {Huang, Lei and Yu, Weijiang and Ma, Weitao and Zhong, Weihong and Feng, Zhangyin and Wang, Haotian and Chen, Qianglong and Peng, Weihua and Feng, Xiaocheng and Qin, Bing and Liu, Ting},
+  title     = {A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions},
+  journal   = {ACM Transactions on Information Systems},
+  volume    = {43},
+  number    = {2},
+  articleno = {42},
+  pages     = {1--55},
+  year      = {2025},
+  publisher = {ACM},
+  doi       = {10.1145/3703155}
+}
+
+@inproceedings{DBLP:conf/icde/HuangHLJXC24,
+  author    = {Huang, Yuncheng and He, Qianyu and Liang, Jiaqing and Jiang, Sihang and Xiao, Yanghua and Chen, Yunwen},
+  title     = {Enhancing Quantitative Reasoning Skills of Large Language Models through Dimension Perception},
+  booktitle = {2024 IEEE 40th International Conference on Data Engineering (ICDE)},
+  pages     = {789--802},
+  year      = {2024},
+  publisher = {IEEE},
+  doi       = {10.1109/ICDE60146.2024.00066}
+}
 
 % ---------------------------------------------------------------------
 % 1. IoT IDS benchmark datasets
@@ -157,6 +241,13 @@
   year      = {2025}
 }
 
+@misc{jamshidi2025thinkfast,
+  author       = {Jamshidi, Saeid and Nikanjam, Amin and Shahabi, Negar and Nafi, Kawser Wazed and Khomh, Foutse and Keivanpour, Samira and Herrero, Rolando},
+  title        = {Think Fast: Real-Time {IoT} Intrusion Reasoning Using {IDS} and {LLMs} at the Edge Gateway},
+  howpublished = {arXiv preprint arXiv:2511.18230},
+  year         = {2025}
+}
+
 @inproceedings{aboulela2025evaluating,
   author    = {AboulEla, Sara and Kashef, Rasha},
   title     = {Evaluating Large Language Models for Enhanced Intrusion Detection in {Internet of Things} Networks},
@@ -221,6 +312,39 @@
   year      = {2020}
 }
 
+@article{breiman2001randomforests,
+  author    = {Breiman, Leo},
+  title     = {Random Forests},
+  journal   = {Machine Learning},
+  volume    = {45},
+  number    = {1},
+  pages     = {5--32},
+  year      = {2001},
+  publisher = {Springer},
+  doi       = {10.1023/A:1010933404324}
+}
+
+@book{cohen1988power,
+  author    = {Cohen, Jacob},
+  title     = {Statistical Power Analysis for the Behavioral Sciences},
+  edition   = {2nd},
+  year      = {1988},
+  publisher = {Lawrence Erlbaum Associates},
+  address   = {Hillsdale, NJ}
+}
+
+@article{sokolova2009metrics,
+  author    = {Sokolova, Marina and Lapalme, Guy},
+  title     = {A Systematic Analysis of Performance Measures for Classification Tasks},
+  journal   = {Information Processing \& Management},
+  volume    = {45},
+  number    = {4},
+  pages     = {427--437},
+  year      = {2009},
+  publisher = {Elsevier},
+  doi       = {10.1016/j.ipm.2009.03.002}
+}
+
 % ---------------------------------------------------------------------
 % 5. Integrated Sensing, Communication, Computation and edge foundation models
 % ---------------------------------------------------------------------
@@ -257,6 +381,28 @@
   title        = {Edge Large {AI} Models: Collaborative Deployment and {IoT} Applications},
   howpublished = {arXiv preprint arXiv:2505.03139},
   year         = {2025}
+}
+
+@article{rivkin2025aiotsmarthome,
+  author    = {Rivkin, Dmitriy and Hogan, Francois Robert and Feriani, Amal and Konar, Abhisek and Sigal, Adam and Liu, Xue and Dudek, Gregory},
+  title     = {{AIoT} Smart Home via Autonomous {LLM} Agents},
+  journal   = {IEEE Internet of Things Journal},
+  volume    = {12},
+  number    = {3},
+  pages     = {2458--2472},
+  year      = {2025},
+  doi       = {10.1109/JIOT.2024.3471904}
+}
+
+@article{zhang2025edgeshard,
+  author    = {Zhang, Mingjin and Shen, Xiaolin and Cao, Jiannong and Cui, Zeyang and Jiang, Shan},
+  title     = {{EdgeShard}: Efficient {LLM} Inference via Collaborative Edge Computing},
+  journal   = {IEEE Internet of Things Journal},
+  volume    = {12},
+  number    = {10},
+  pages     = {13119--13131},
+  year      = {2025},
+  doi       = {10.1109/JIOT.2024.3524255}
 }
 
 @article{frontiers2025edgellm,

@@ -1,6 +1,8 @@
 \section{Performance Evaluation and Results}
 \label{sec:resultsAndDisc}
 
+We evaluate the five protocols defined in Section~\ref{sec:architecture}---binary and multi-class closed-set classification, zero-day detection, anonymization ablation, and adversarial robustness---across the five IoT benchmark datasets below, and additionally report edge-deployment latency on Raspberry Pi hardware. All protocols use the policy-generation loop of \S\ref{subsec:policy_generation} with identical hyperparameters.
+
 %===============================================================
 \subsection{Dataset Overview}\label{subsec:datasets}
 %===============================================================
@@ -82,13 +84,13 @@ CIC-IoT2023 produces a 2$\times$ gap ($0.45$ vs.\ $0.89$), where eight attack fa
 
 The 9$\times$ gap on UNSW-NB15 ($0.07$ vs.\ $0.63$) reflects a structural dataset-level constraint that affects all methods. Even Random Forest struggles on Analysis~(0.32), Backdoor~(0.24), and DoS~(0.27), confirming that the nine sub-class families share statistical signatures at the feature level. The LLM failure mode is rule convergence. Multiple attack classes independently generate near-identical volume-based thresholds, causing the proportion-of-rules-fired scorer to tie and default to the Normal label (Fig.~\ref{fig:confusion_multiclass}b). Generic and Reconnaissance illustrate this precisely, with precision of $1.00$ but recall of $0.02$ and $0.007$ respectively. The rules fire correctly but so rarely that more than 90\% of true attack instances are missed. UNSW-NB15's sub-class families are statistically indistinguishable in the sampled feature space, and zero-shot rule generation cannot resolve this ambiguity without gradient-based training on the discriminative directions between classes.
 
-TON\_IoT and Bot-IoT are evaluated in binary rather than multi-class mode. Bot-IoT's corpus is limited to 740 training samples to preserve class balance, which is insufficient for stable per-class rule generation across five attack families. TON\_IoT's ten attack families exhibit heavy intra-class overlap at the flow level and are therefore evaluated in the zero-day and anonymization settings, where that overlap structure is the subject of analysis rather than an obstacle. Binary ML baselines confirm near-perfect separability for both datasets: TON\_IoT achieves RF~$0.9999$ and DT~$0.9998$; Bot-IoT achieves RF~$1.000$ and DT~$0.9996$ (macro-averaged F1, mean over ten runs). The LLM best-round F1 for both datasets is reported in Table~\ref{tab:policy_refinement}.
+TON\_IoT and Bot-IoT are evaluated in binary rather than multi-class mode. Bot-IoT's corpus is limited to 740 training samples to preserve class balance, which is insufficient for stable per-class rule generation across five attack families. TON\_IoT's ten attack families exhibit heavy intra-class overlap at the flow level and are therefore evaluated in the zero-day and anonymization settings, where that overlap structure is the subject of analysis rather than an obstacle. Binary ML baselines confirm near-perfect separability for both datasets: TON\_IoT achieves RF~$0.9999$ and DT~$0.9998$; Bot-IoT achieves RF~$1.000$ and DT~$0.9996$ (macro-averaged F1, mean over ten runs). The LLM binary F1 for both datasets is reported in Table~\ref{tab:policy_refinement} (\S\ref{subsec:binary_results}).
 
 \subsection{Zero-Day Detection Analysis}
 \label{subsec:zeroday_results}
 %=======================================================================
 
-Zero-day detection performance is determined primarily by how distinctly the withheld class occupies feature space relative to the known training classes. Table~\ref{tab:zeroday_summary} reports ZDR (Zero-Day Detection Rate) and Known-F1 for each withholding scenario. ZDR is the fraction of withheld-class flows correctly flagged as anomalous. Known-F1 is the macro-averaged F1 on the remaining known classes and captures the cost to closed-set performance of removing one class from training. A ZDR near 1.0 confirms that the LLM-generated rules isolate the withheld attack family without ever observing it during training.
+Zero-day detection performance is determined primarily by how distinctly the withheld class occupies feature space relative to the known training classes. Table~\ref{tab:zeroday_summary} reports ZDR (Zero-Day Detection Rate) and Known-F1 for each withholding scenario. ZDR is the fraction of withheld-class flows correctly flagged as anomalous via the SMCC anomaly score defined in \S\ref{subsec:zeroday} ($\mathrm{ZDR} = \mathrm{TP}_{c^*} / |\mathcal{D}_{c^*}|$). Known-F1 is the macro-averaged F1 on the remaining known classes and captures the cost to closed-set performance of removing one class from training. A ZDR near 1.0 confirms that the LLM-generated rules isolate the withheld attack family without ever observing it during training.
 
 \begin{table*}[htbp]
 \centering
@@ -122,15 +124,18 @@ For WUSTL-IIoT, two runs with different rule configurations were available. Tabl
 \label{subsec:anon_results}
 %=======================================================================
 
-Table~\ref{tab:anon_ablation} compares macro-averaged F1 under original (semantic) versus anonymized (opaque-identifier) feature names across all datasets with ablation results available. The Jaccard index quantifies how consistently the system selects the same top-5 features across seeds when feature names are hidden.
+Table~\ref{tab:anon_ablation} compares macro-averaged F1 under original (semantic) versus anonymized (opaque-identifier) feature names across all datasets in \emph{binary classification mode}, with ablation results available. The Jaccard index quantifies how consistently the system selects the same top-5 features across seeds when feature names are hidden. The absolute F1 values for CIC-IoT2023 and TON\_IoT in this table differ from Table~\ref{tab:policy_refinement}; this reflects differences in the ablation pipeline configuration (corpus sampling and acceptance-loop settings) and the values should not be compared across tables---only the within-table $\Delta$F1 contrast is meaningful. \textbf{Note for authors:} the Jaccard $\pm$ std values for WUSTL-IIoT and TON\_IoT are identical (0.369\,$\pm$\,0.084), as are those for Bot-IoT and UNSW-NB15 (0.508\,$\pm$\,0.112); verify these are computed rather than copied.
 
 \begin{table*}[htbp]
 \centering
-\caption{Anonymization ablation results using claude-haiku-4-5
+\caption{Anonymization ablation results using claude-haiku-4-5, \emph{binary classification mode}
   (macro-averaged F1, mean $\pm$ std
   across 3~seeds). $\Delta$F1~=~F1$_{\text{anon}}$~$-$~F1$_{\text{orig}}$.
   Jaccard: mean $\pm$ std feature-set overlap between original and anonymized
-  conditions across seeds.}
+  conditions across seeds.
+  UNSW-NB15 uses a separate 10{,}000-sample binary corpus (see Table~\ref{tab:datasets} footnote);
+  CIC-IoT2023 and TON\_IoT F1 values reflect the ablation pipeline configuration and
+  differ from Table~\ref{tab:policy_refinement} (see text).}
 \label{tab:anon_ablation}
 \begin{tabular}{lcccccc}
 \toprule
@@ -195,7 +200,7 @@ per-seed variance ($\pm 0.060$ for Haiku, $\pm 0.031$ for Gemini), which
 we interpret as a consequence of the heavy intra-class overlap among its
 ten attack families identified in \S\ref{subsec:multiclass_results}.
 
-The result placement matches or exceeds recent LLM-assisted IoT IDS work.
+These results match or exceed recent LLM-assisted IoT IDS work.
 On CIC-IoT2023, a QLoRA-tuned LLaMA-1B reports F1~$=0.7124$ for known
 attacks~\cite{lightweight_llm_iot_2025}; our zero-fine-tuning prompt-only
 policy achieves $0.98$ on the same benchmark. On UNSW-NB15, a fine-tuned
@@ -367,6 +372,13 @@ UNSW-NB15   & Protocol, TTL, connection state, packet counts & 0 & 0 \\
     \label{fig:threshold_sensitivity_all}
 \end{figure}
 
+In this analysis $\tau$ denotes the weighted-vote count threshold: the
+minimum number of the $k=5$ accepted rules that must fire on a flow
+for it to be labelled as attack (and thereby flagged as a zero-day
+candidate). This is distinct from the SMCC proportion threshold
+defined in \S\ref{subsec:zeroday}; the vote-count sweep is the
+operationally relevant quantity for gateway deployment.
+
 WUSTL-IIoT~(b) and TON\_IoT~(c) are threshold-insensitive successes.
 ZDR remains near unity across all $\tau$ while FPR stays below 0.20
 even at $\tau=1$, so the operating point choice has no practical
@@ -461,14 +473,13 @@ UNSW-NB15    & 0.165 & 3.522 & 26.9 & 0.044 & 0.881 & 7.23 \\
 \end{tabular}
 \end{table}
 
-The LLM policy is consistently faster than Random Forest by 144$\times$--163$\times$ across both devices and all five datasets, confirming that the macOS latency advantage reported in Table~\ref{tab:timing} transfers in full to resource-constrained ARM hardware. Against Decision Tree, the Pi result diverges sharply from the macOS picture: DT requires 3.2--3.5\,ms per row on Pi~4 and 0.77--0.89\,ms on Pi~5, making the LLM policy 18$\times$--20$\times$ faster than DT on both devices. On macOS ARM the LLM-vs-DT comparison was dataset-dependent, because Apple Silicon's NEON-optimised scikit-learn path eliminates the Python-level tree-traversal overhead that dominates on Raspberry Pi. The LLM policy advantage is therefore \emph{amplified} on embedded ARM hardware: evaluating a flat list of boolean conditions incurs no branch-navigation overhead and requires no hardware-specific linear-algebra tuning. (needs a citation to back this up)
+The LLM policy is consistently faster than Random Forest by 144$\times$--163$\times$ across both devices and all five datasets. Against Decision Tree, the Pi result diverges sharply from the desktop picture: DT requires 3.2--3.5\,ms per row on Pi~4 and 0.77--0.89\,ms on Pi~5, making the LLM policy 18$\times$--20$\times$ faster than DT on both devices. On macOS ARM the LLM-vs-DT comparison was dataset-dependent, because Apple Silicon's NEON-optimised scikit-learn path reduces the Python-level tree-traversal overhead that dominates on Raspberry Pi. The LLM policy advantage is therefore \emph{amplified} on embedded ARM hardware: the rule evaluator is a single vectorized comparison loop in plain Python with no tree traversal, no BLAS calls, and no interpreter-level dispatch beyond that of any pure-NumPy kernel.
 
-Pi~5 achieves a 3.6$\times$-3.7$\times$ latency reduction relative to Pi~4 across all conditions, consistent with its higher clock frequency and improved Cortex-A76 branch predictor. In batch mode, Pi~5 sustains 612{,}000--1{,}268{,}000 flows per second with the LLM policy artefact, sufficient for high-throughput gateway operation. The peak resident memory footprint is indistinguishable from baseline Python overhead ($\Delta$RSS\,$\approx\,0$\,bytes), as the rule artefact is a compact JSON list requiring no model weights or index structures at inference time. Together, these results confirm that the offline policy-generation cost is incurred once and that the resulting gateway-side runtime is viable on commodity single-board computers.
+Pi~5 achieves a 3.6$\times$-3.7$\times$ latency reduction relative to Pi~4 across all conditions, consistent with its higher clock frequency and improved Cortex-A76 branch predictor. In batch mode (evaluating a block of flows simultaneously via vectorized NumPy comparisons rather than one row at a time), Pi~5 sustains 612{,}000--1{,}268{,}000 flows per second with the LLM policy artefact, sufficient for high-throughput gateway operation. The peak resident memory footprint is indistinguishable from baseline Python overhead ($\Delta$RSS\,$\approx\,0$\,bytes), as the rule artefact is a compact JSON list requiring no model weights or index structures at inference time. Together, these results confirm that the offline policy-generation cost is incurred once and that the resulting gateway-side runtime is viable on commodity single-board computers.
 
 \subsection{Discussion and Limitations}
 
-Across five IoT benchmark datasets and four experimental axes, four
-principal findings emerge.
+Across five IoT benchmark datasets and six experimental axes (binary and multi-class classification, zero-day detection, anonymization ablation, adversarial robustness, and edge deployment), four principal findings emerge.
 
 First, LLM-generated threshold rules achieve near-parity with gradient
 classifiers and prior LLM-tuned baselines on datasets with well-separated
