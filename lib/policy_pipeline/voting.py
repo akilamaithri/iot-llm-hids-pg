@@ -70,7 +70,7 @@ def rules_firing_matrix(rules: Iterable[Rule], X: pd.DataFrame) -> np.ndarray:
 def predict(policy: Policy, X: pd.DataFrame) -> np.ndarray:
     """Apply the policy to X. Returns array of {"attack","normal"} strings.
 
-    Notebook 4 / 12-standardize-results.py use string labels; we match.
+    05-anonymization-ablation-*.ipynb / standardize-results.py use string labels; we match.
     """
     fires = rules_firing_matrix(policy.rules, X)
     n_rows, n_rules = fires.shape

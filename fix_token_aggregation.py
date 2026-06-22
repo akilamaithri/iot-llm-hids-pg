@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 
 BASE = Path(__file__).parent
+# Per-dataset results/ folders live outside the repo, in a sibling directory.
+EXTERNAL_RESULTS_ROOT = BASE.parent / "iot-llm-hids-pg-results"
 
 DATASETS = [
     ("1-cic-iot",    "CIC-IoT2023"),
@@ -39,7 +41,7 @@ def extract_round_tokens(round_data):
 rows = []
 
 for folder, label in DATASETS:
-    llm_dir = BASE / folder / "results" / "llm"
+    llm_dir = EXTERNAL_RESULTS_ROOT / folder / "llm"
     if not llm_dir.exists():
         print(f"  SKIP {label}: directory not found")
         continue

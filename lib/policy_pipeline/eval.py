@@ -1,7 +1,7 @@
 """Classification-report wrappers.
 
 We keep label strings {"attack","normal"} for compatibility with the
-existing canonical eval script (12-standardize-results.py).
+existing canonical eval script (standardize-results.py).
 """
 
 from __future__ import annotations

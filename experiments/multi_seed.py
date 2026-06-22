@@ -1,8 +1,10 @@
 """Multi-seed campaign with a fixed config per (dataset, model).
 
-Reads winning-config selections (from build_sweep_summary.py) or accepts
-explicit overrides per dataset. Runs each (dataset, provider) at seeds
-{42, 123, 456} and writes results to experiments/sweeps/multi_seed-<ts>.csv.
+The WINNERS dict below is a hardcoded snapshot of the config that won the
+hyperparameter sweep (sweep_policy.py / build_sweep_summary.py, archived —
+not part of the published, fixed-hyperparameter pipeline). Runs each
+(dataset, provider) at seeds {42, 123, 456} and writes results to
+experiments/sweeps/multi_seed-<ts>.csv.
 
     python experiments/multi_seed.py --dataset all --provider both \
         --seeds 42,123,456
@@ -30,8 +32,9 @@ from lib.policy_pipeline.io import save_policy
 from lib.policy_pipeline.voting import predict
 
 
-# Winners from experiments/sweeps/winners-macro_f1.csv (picked by sweep + post-fix
-# manual entry for ton/google after the diversity.py quantile fix).
+# Winners from iot-llm-hids-pg-archive/experiments/sweeps/winners-macro_f1.csv
+# (picked by sweep + post-fix manual entry for ton/google after the
+# diversity.py quantile fix).
 WINNERS: dict[tuple[str, str], dict] = {
     ("bot",   "anthropic"): {"voting_mode": "weighted", "selection_metric": "macro_f1",  "composite_alpha": 0.6, "k": 5},
     ("bot",   "google"):    {"voting_mode": "weighted", "selection_metric": "macro_f1",  "composite_alpha": 0.6, "k": 5},

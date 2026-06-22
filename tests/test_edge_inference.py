@@ -10,7 +10,7 @@ import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EDGE_PATH = REPO_ROOT / "experiments" / "13-edge-inference-benchmark.py"
+EDGE_PATH = REPO_ROOT / "experiments" / "08-edge-benchmark-raspberry-pi.py"
 
 
 def load_edge_module():

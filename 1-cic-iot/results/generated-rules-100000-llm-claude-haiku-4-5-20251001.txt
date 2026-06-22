@@ -1,9 +1,0 @@
-```json
-{
-  "flow_duration": "If flow_duration < 5.0, classify as attack; otherwise normal",
-  "Duration": "If Duration == 64.0, classify as attack; otherwise normal",
-  "Header_Length": "If Header_Length < 200, classify as attack; otherwise normal",
-  "Std": "If Std == 0.0, classify as attack; otherwise normal",
-  "Covariance": "If Covariance == 0.0, classify as attack; otherwise normal"
-}
-```

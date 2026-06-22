@@ -1,4 +1,4 @@
-"""Script to generate 10-kerckhoffs-robustness.ipynb using nbformat."""
+"""Script to generate 07-adversarial-robustness-kerckhoffs.ipynb using nbformat."""
 import nbformat
 
 nb = nbformat.v4.new_notebook()
@@ -31,9 +31,11 @@ warnings.filterwarnings('ignore')
 # Notebook lives at iot-llm-hids-pg/experiments/
 # BASE  = iot-llm-hids-pg/
 # DATA_ROOT = RAG Paper/   (parent of iot-llm-hids-pg, contains data/)
+# RESULTS_ROOT = RAG Paper/iot-llm-hids-pg-results/   (per-dataset results/ moved here)
 NOTEBOOK_DIR = Path.cwd()
 BASE         = NOTEBOOK_DIR.parent
 DATA_ROOT    = NOTEBOOK_DIR.parent.parent
+RESULTS_ROOT = DATA_ROOT / 'iot-llm-hids-pg-results'
 
 DATASETS = [
     {
@@ -44,10 +46,10 @@ DATASETS = [
         'withheld_class': 'Mirai-udpplain',
         'drop_cols':      ['label'],
         # LLM result files
-        'llm_orig_glob':  str(BASE / '1-cic-iot/results/llm/zeroday-Mirai-udpplain-seed42-*.json'),
-        'llm_anon_glob':  str(BASE / '1-cic-iot/results/anon/zeroday-Mirai-udpplain-anon-ablation-seed42-*.json'),
-        'llm_anon_save_dir': str(BASE / '1-cic-iot/results/anon'),
-        'anon_map_file':  str(BASE / '1-cic-iot/results/anon/cic-iot-anon-ablation.json'),
+        'llm_orig_glob':  str(RESULTS_ROOT / '1-cic-iot/llm/zeroday-Mirai-udpplain-seed42-*.json'),
+        'llm_anon_glob':  str(RESULTS_ROOT / '1-cic-iot/anon/zeroday-Mirai-udpplain-anon-ablation-seed42-*.json'),
+        'llm_anon_save_dir': str(RESULTS_ROOT / '1-cic-iot/anon'),
+        'anon_map_file':  str(RESULTS_ROOT / '1-cic-iot/anon/cic-iot-anon-ablation.json'),
         # flat = top-level 'rules' key; nested = 'original'/'anonymized' sub-dicts
         'llm_json_format': 'flat',
     },
@@ -59,7 +61,7 @@ DATASETS = [
         'withheld_class': 'Reconn',
         'drop_cols':      ['Target', 'Traffic'],
         'llm_orig_glob':  None,   # orig rules are inside the anon-ablation file
-        'llm_anon_glob':  str(BASE / '2-wustl-iiot/results/anon/zeroday-Reconn-anon-ablation-seed42-*.json'),
+        'llm_anon_glob':  str(RESULTS_ROOT / '2-wustl-iiot/anon/zeroday-Reconn-anon-ablation-seed42-*.json'),
         'llm_anon_save_dir': None,
         'anon_map_file':  None,
         'llm_json_format': 'nested',
@@ -77,6 +79,7 @@ CONDITIONS = ['LLM_orig', 'LLM_anon', 'DT_d3', 'DT_d5', 'RF_d5']
 
 print(f'BASE      : {BASE}')
 print(f'DATA_ROOT : {DATA_ROOT}')
+print(f'RESULTS_ROOT : {RESULTS_ROOT}')
 print(f'OUT_DIR   : {OUT_DIR.resolve()}')
 print(f'Datasets  : {[d["name"] for d in DATASETS]}')
 print(f'Conditions: {CONDITIONS}')
@@ -200,7 +203,7 @@ def load_llm_rules(config, condition, seed=42):
 def _generate_cic_anon_rules(config, seed):
     \"\"\"
     Generate anonymized LLM rules for CIC-IoT if result file absent.
-    Mirrors the pipeline from 1-cic-iot/8-zero-day-evaluation copy.ipynb
+    Mirrors the pipeline from 1-cic-iot/04-zero-day-detection-claude.ipynb
     but feeds anonymized feature names (f0, f1, …) to the LLM.
     \"\"\"
     import dotenv
@@ -1204,7 +1207,7 @@ nb.cells = [
     C0, C1, C2, C3, C4, C5, C6, C7, C8, C9
 ]
 
-out_path = "10-kerckhoffs-robustness.ipynb"
+out_path = "07-adversarial-robustness-kerckhoffs.ipynb"
 with open(out_path, "w") as f:
     nbformat.write(nb, f)
 

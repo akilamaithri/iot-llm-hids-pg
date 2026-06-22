@@ -1,7 +1,7 @@
 """Policy JSON contract between the pipeline and canonical eval.
 
 A policy JSON is the single artefact handed off to
-experiments/12-standardize-results.py (after that script is refactored
+experiments/standardize-results.py (after that script is refactored
 to consume JSONs instead of its hardcoded DATASETS dict).
 """
 

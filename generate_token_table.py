@@ -46,8 +46,8 @@ def build_token_table(datasets_dir):
             print(f"⚠ Directory not found: {dataset_dir}, skipping...")
             continue
 
-        # Look for JSON file in results/llm/
-        results_dir = dataset_dir / "results" / "llm"
+        # Per-dataset results/ folders live outside the repo, in a sibling directory.
+        results_dir = dataset_dir.parent.parent / "iot-llm-hids-pg-results" / folder_name / "llm"
         json_files = list(results_dir.glob("policy-refinement-summary-*.json")) if results_dir.exists() else []
 
         if not json_files:
