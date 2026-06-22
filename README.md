@@ -36,7 +36,35 @@ In this research we try to find how Large Language Models (LLMs) perform to impr
 
     > For ex:
     >
-    > Run `00-dataset-analysis.ipynb`, `01-preprocessing.ipynb`, `02-baseline-ml.ipynb`, `03-multiclass-classification-llm.ipynb`, `04-zero-day-detection-claude.ipynb`, `05-anonymization-ablation-original.ipynb`, `06-binary-classification-llm-claude.ipynb`, ... in `1-cic-iot` directory to evaluate `CICIoT2023` dataset. Each dataset folder follows the same numbering, matching the order results appear in Section V of the paper; superseded/exploratory notebooks live under each folder's `archive/` subdirectory.
+    > Run `00-dataset-analysis.ipynb`, `01-preprocessing.ipynb`, `02-baseline-ml.ipynb`, `03-multiclass-classification-llm.ipynb`, `04-zero-day-detection-claude.ipynb`, `05-anonymization-ablation-original.ipynb`, `06-binary-classification-llm-claude.ipynb`, ... in `1-cic-iot` directory to evaluate `CICIoT2023` dataset. Each dataset folder follows the same numbering, matching the order results appear in Section V of the paper (`03-multiclass-classification-llm.ipynb` only exists for CIC-IoT2023, WUSTL-IIoT, and UNSW-NB15; `-gemini` siblings provide the cross-vendor comparison).
+
+## Repository Layout
+
+```
+RAG Paper/
+├─ iot-llm-hids-pg/                 # this repository — notebooks + pipeline code only
+│  ├─ 1-cic-iot/ … 5-unsw-nb15/     # one notebook per paper result, per dataset (see above)
+│  ├─ experiments/                  # cross-dataset scripts (see below)
+│  └─ lib/                          # shared policy-pipeline code used by experiments/
+├─ iot-llm-hids-pg-results/         # generated per-dataset results/ folders (gitignored;
+│  └─ 1-cic-iot/ … 5-unsw-nb15/     #  rule outputs, feature-importance reports, plots — not code)
+└─ iot-llm-hids-pg-archive/         # superseded/dev-history notebooks and scripts, kept for
+   ├─ 1-cic-iot/ … 5-unsw-nb15/     #  reproducibility but not referenced by the published paper
+   └─ experiments/                  #  (early pipeline iterations, hyperparameter-sweep tooling,
+                                     #   the abandoned "hybrid RAG" exploration, etc.)
+```
+
+`experiments/` only keeps what feeds a table or figure in the paper:
+
+| File | Paper reference |
+| - | - |
+| `07-adversarial-robustness-kerckhoffs.ipynb` (+ `_make_notebook.py` generator) | §V-G, Table IX, Fig. 6 |
+| `08-edge-benchmark-matched-inference.py`, `08-edge-benchmark-raspberry-pi.py` | §V-H, Table X |
+| `run_pipeline.py`, `multi_seed.py`, `eval_policy.py` | Underlying driver/eval for the cross-vendor binary results |
+| `build_results_table.py`, `aggregate_multi_seed.py`, `standardize-results.py` | §V-E/B/D, Tables III, VI, VII, VIII |
+| `policies/`, `results/` | Generated artifacts consumed/produced by the scripts above |
+
+Hyperparameter-sweep tooling (`sweep_policy.py`, `build_sweep_summary.py`), the standalone `check_imbalances.py` diagnostic, and the abandoned hybrid-RAG comparison files live in `iot-llm-hids-pg-archive/experiments/` — the paper uses globally fixed hyperparameters (k=5, n_top=5, n_rounds=8), so no sweep ablation is reported.
 
 ## Datasets
 
@@ -53,10 +81,9 @@ In this research we try to find how Large Language Models (LLMs) perform to impr
 
 ## Large Language Models
 
-| Name               | Provider  |
-|--------------------|-----------|
-| gpt-4o*            | OpenAI    |
-| gemini-1.5-pro*    | Google    |
-| claude-3-5-sonnet* | Anthropic |
+| Name                      | Provider  |
+|---------------------------|-----------|
+| claude-haiku-4-5*         | Anthropic |
+| gemini-2.5-flash*         | Google    |
 
-\* Used in our experiment.
+\* Used as the two cross-vendor rule generators reported in the paper (Tables VI/VII). Earlier exploratory runs against `gpt-4o`, `gemini-1.5-pro`, and `claude-3-5-sonnet` are preserved in `iot-llm-hids-pg-archive/`.
